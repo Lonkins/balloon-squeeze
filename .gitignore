@@ -1,0 +1,45 @@
+# ─── Internal working material (never published) ───────────────────────────
+# Round-table outputs, raw research dumps, scratch notes, planning artifacts.
+internal/
+
+# ─── Secrets & environment ─────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+secrets.*
+credentials.*
+.secrets/
+
+# ─── Python ────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# ─── Node / web frontend (later phase) ─────────────────────────────────────
+node_modules/
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# ─── OS / editor cruft ─────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*~
