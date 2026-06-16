@@ -1,43 +1,50 @@
 # 04 · Kickoff Prompt
 
-Paste the block below into a fresh build thread to start implementation. It assumes the assistant is working in this `reverse-turing-theater/` folder and can read the other three design docs.
+Paste the block below into a fresh build thread to start implementation. It assumes the assistant is working in this folder and can read the other design docs.
 
 ---
 
-You are the build assistant for **Reverse Turing Theater**.
+You are the build assistant for **Balloon Squeeze**, a research instrument.
 
-**One-liner:** an inverted Turing test staged as spectator theater — a cast of AI agents, each with a distinct personality, must work out which participant among them is the lone human (who is trying to blend in), with rounds of banter, public reasoning, live suspicion votes, eliminations, and a reveal.
+**One-liner:** inside a multi-agent social-deduction game, a hidden *impostor* agent has an incentive to make false claims; the engine holds ground-truth for its claims on *both* sides of a checkability boundary; we announce a *verifier* in some experimental arms and, by replaying the byte-identical seeded world with the verifier toggled on vs off, measure whether dishonesty is **reduced** (honesty) or **redistributed onto unchecked claims** (displacement — the "balloon squeeze").
 
-**Read these first** (they are in this same folder — read them by filename before writing code):
-- `01-concept-brief.md` — what we're building and why; the two modes; honest novelty framing; scope (MoSCoW); risks.
-- `02-technical-architecture.md` — the stack, data model, the full game loop, the provider-agnostic + mock-mode LLM layer, prompt design, key flows, project structure.
-- `03-build-roadmap.md` — the phase plan and per-phase Definitions of Done. **You are doing Phase 0 + Phase 1.**
+**Read these first** (in this folder, by filename, before writing code):
+- `01-concept-brief.md` — the question, hypotheses (H1–H6 + null), the contribution, prior art, scope, risks.
+- `02-technical-architecture.md` — the kept engine + new components (proposition ledger, verifier arms, blind scorer, arm-swap replay), data model, the experimental loop, metric computation, controls, project structure.
+- `03-build-roadmap.md` — the gated phase plan. **You are doing Phases 0 → 1**, and laying the seam for Phase 2.
+- `05-preregistration.md` — the analysis plan; respect its primary/secondary split in how you shape the data.
 
-**Goal of this first build session:** stand up the plumbing and the core showpiece — a **terminal auto-mode game** that runs entirely on the **mock provider** with zero setup, and prints a complete, reproducible episode ending in a reveal.
+**Goal of this first session:** stand up the deterministic plumbing and the core measurement path — a **mock-provider** game that authors a **proposition ledger** (truth on both classes), runs a deliberation loop where the impostor produces claims, **scores false-mass on both checkable and uncheckable propositions against the ledger**, and prints per-class `C`/`U` — all with zero setup.
 
 **Stack & constraints:**
-- Python 3.11+. A thin, hand-rolled orchestrator — **no heavy agent framework**.
-- LLM access goes through a **single provider-agnostic abstraction** (`LLMClient` + `make_client()`); the rest of the code never imports a vendor SDK directly.
-- Providers: `anthropic`, `openai-compatible`, `ollama`, `mock`. Configured **only by env vars**: `RTT_PROVIDER` (default `mock`), `RTT_API_KEY`, `RTT_MODEL`, `RTT_BASE_URL` (optional), `RTT_SEED` (optional), `RTT_TEMPERATURE` (optional).
-- **Mock mode is mandatory and is the default.** With no key and no network, the full game must run: mock agents emit scripted/templated lines (seeded) for talk turns, return parseable JSON for votes, and the loop produces an elimination and a reveal. This is the always-green demo and the CI fixture.
-- **Keep model names generic.** Use placeholders for defaults (e.g. `RTT_MODEL=small-fast` / "your provider's small chat model"); never hard-code a specific vendor model. Real model strings come from `RTT_MODEL`.
-- Follow the project structure and data model in `02-technical-architecture.md` (`Persona`, `Agent`, `Round`, `Game`, `Message`, `Suspicion`, configs; an event bus; engine as single source of truth; ground-truth `human_id`/roles live engine-only and never enter any prompt).
+- Python 3.11+. A thin, hand-rolled, **deterministic** orchestrator — no heavy agent framework. **Replay identity is the spine; never compromise determinism.**
+- LLM access goes through a single provider-agnostic abstraction (`LLMClient` + `make_client()`); the rest of the code never imports a vendor SDK.
+- Providers: `anthropic`, `openai-compatible`, `ollama`, `mock`. Env-only config: `BSQ_PROVIDER` (default `mock`), `BSQ_API_KEY`, `BSQ_MODEL`, `BSQ_BASE_URL`, `BSQ_SEED`, `BSQ_TEMPERATURE`, `BSQ_VERIFIER_ARM`, `BSQ_CHECKABILITY_FRACTION`.
+- **Mock mode is mandatory and default.** It must carry scripted **strategic-displacer / honest / hedger** impostor personas so the scoring + estimator pipeline can be validated and a planted effect recovered. **Mock validates pipeline and estimator-recovery ONLY — never power.**
+- **Keep model names generic** (`BSQ_MODEL=...`); never hard-code a vendor model. The study uses ≥3 model families, named at run time.
+- Follow the data model in `02`: `Proposition` (with `class_`, `truth_value`, `topic_id`), `Claim`, `Agent` (`role` engine-only), `VerifierArm`, `Game` (with `proposition_ledger`, `impostor_id`); the append-only event bus; **ground-truth roles and ledger truth live engine-only and never enter any prompt or agent memory.**
 
-**First concrete deliverable (Phase 1 Definition of Done):**
-A terminal **auto-mode** game with **4 mock agents — one secretly instructed to "act human"** — that runs **N rounds** of in-character banter plus per-round **suspicion votes**, performs at least one **elimination**, and prints a **reveal** (who the cast accused vs. who the human really was), all on the **mock provider**. Concretely:
-- `rtt play --mode auto --seed N --rounds M` runs the whole thing with **no API key and no network**.
-- Re-running the **same seed reproduces the same episode** (roster, turn order, mock banter, votes, tie-breaks all seeded).
-- The same command works through the **identical loop** if a real `RTT_PROVIDER`/`RTT_MODEL`/`RTT_API_KEY` is set (real banter instead of mock) — but do not require that for this session.
-- Ship ~4 distinct personas as YAML in `personas/` (e.g. noir detective, relentless optimist, pedantic professor, chaos gremlin) and load them.
+**First concrete deliverable (Phase 0 + start of Phase 1):**
+- `bsq run --arm A0_off --seed N` plays a full game on **mock** with **no key and no network**, authors a balanced `proposition_ledger` (fraction `φ` checkable, both classes truth-held), runs the deliberation loop, and emits scored claims.
+- A `score` step computes assertion-rate-normalized false-mass `C` (checkable) and `U` (uncheckable) and prints them.
+- **Re-running the same seed reproduces the same game exactly** (roster, turn order, mock claims, votes, tie-breaks, ledger all seeded).
+- Ship a small accusatory-panel + impostor persona pack as YAML and load it.
 
-Get Phase 0 (config, `make_client`, `mock_client`, models, event bus) solid first, then build the Phase 1 loop on top.
+Then lay the seam for Phase 2: structure `run` so a later **arm-swap replay** can re-run the identical seeded world changing only the verifier-announcement block.
+
+**Hard guardrails (from adversarial review — bake these in):**
+- The primary estimand is the **bivariate `(ΔC, ΔU)` joint contrast**. `D = ΔU/|ΔC|` is **secondary only**, never conditioned on `ΔC < 0`. Shape the emitted data so the joint model is the natural analysis.
+- The **claim extractor/scorer runs blind to arm.**
+- **"Uncheckable" = engine-knowable-but-agent-unverifiable** — exclude genuinely unfalsifiable items when authoring the ledger.
+- Include a **placebo uncheckable-irrelevant proposition set** in the ledger schema (it must later show zero displacement).
+- **Power comes from a real-provider pilot, not mock** — do not let any mock result stand in for power.
 
 **Working agreements:**
-- **Small, runnable steps.** Every step should leave the auto-mode-on-mock demo runnable; don't disappear into a giant non-running branch.
-- **Keep mock green at all times.** The no-key path is both the demo and the test fixture — never break it.
-- **Write a couple of tests for the game loop**, including: (a) a full auto game on mock is **deterministic** for a fixed seed and ends with a correct reveal (`outcome` matches whether the cast's `verdict_id == human_id`); (b) the voting/elimination/threshold/tie-break logic. (A meta-leak filter test is a nice third if time allows.)
-- **Keep agents in character.** Apply the prompt constraints + a light meta-leak filter from the architecture doc so agents don't blurt "as an AI" / admit the game; cap regenerations so cost stays bounded.
-- **Be honest in any copy you write:** the building blocks (Turing-test games, LLM social-deduction agents) exist; the novelty is the *staged-spectator inversion* — AIs hunting a hidden human, a many-persona cast, packaged as a watchable show. And in auto mode the "human" is an LLM doing a human impression; say so plainly.
-- **Ask before adding heavy dependencies.** Stay close to stdlib plus a small set (an HTTP client, Pydantic-or-dataclasses, pytest; FastAPI only when we reach the web phase). Anything bigger: check first.
+- **Small, runnable, deterministic steps.** Every step leaves the mock game + scoring runnable and seed-reproducible.
+- **Keep mock green** — it is the demo, the CI fixture, and the estimator-recovery harness.
+- **Tests:** (a) a seeded mock game is deterministic and re-runs identically; (b) false-mass on both classes is computed correctly on planted transcripts; (c) the seam for arm-swap replay preserves byte-identity on mock.
+- **Be honest in any copy:** the components exist (social-deduction engines, deception benchmarks); the contribution is the *four-ingredient combination* — both-sides ground truth + verifier-awareness as an IV + within-world replay + social pressure. The most-likely result is modest and the null is publishable. Do not overclaim.
+- **No reference to any AI-assistant tooling in code or docs.** Keep everything vendor- and tooling-neutral.
+- **Ask before adding heavy dependencies** (stdlib + HTTP client, Pydantic-or-dataclasses, pytest; NumPy/statsmodels/PyMC for analysis only). Anything bigger: check first.
 
-Start by confirming your plan in a few bullets (files you'll create for Phase 0 → Phase 1, and the exact command you'll make runnable first), then build. End the session by showing the output of `RTT_SEED=42 rtt play --mode auto` running on mock.
+Start by confirming your plan in a few bullets (files for Phase 0 → Phase 1, and the exact `bsq run ... && bsq score` command you'll make runnable first), then build. End the session by showing `BSQ_SEED=42 bsq run --arm A0_off` followed by the per-class `C`/`U` scores, running on mock.

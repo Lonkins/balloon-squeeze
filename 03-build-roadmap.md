@@ -1,92 +1,91 @@
 # 03 · Build Roadmap
 
-## Phasing overview
+## Guiding rule
 
-Four phases, each ending in something you can *run and show*. The guiding rule: **auto-mode must work end-to-end on the `mock` provider at every step** — that's the always-green demo and the CI backbone. Real providers and the human-plays mode layer on top of a loop that's already proven on mock.
+**Earn the right to pre-register, then run at scale.** The study's validity rests on three things being *demonstrated* before any confirmatory data is collected: (1) the within-world replay is byte-identical up to the manipulation, (2) the claim-scorer is unbiased across classes, and (3) the design is adequately powered from a *real-provider* pilot. The roadmap is sequenced so each of these is a **gate**, not an afterthought. As before, the **mock provider stays green at every step** — it is the CI fixture and the estimator-recovery harness.
 
-| Phase | Theme | Demoable milestone | Rough effort | Risk |
-|------|-------|--------------------|--------------|------|
-| 0 | Setup & plumbing | `make_client("mock")` returns a line; empty game scaffolds | ~0.5 day | Low |
-| 1 | Terminal auto-mode POC | A full self-running episode prints a reveal, on mock | ~1.5–3 days | Med (loop + voting balance) |
-| 2 | MVP (human-plays + real personas) | You play impostor against real-model detectives; transcript saved | ~3–5 days | Med (prompt quality, fairness) |
-| 3 | Polish & stretch (web theater) | Browser shows live cast, transcript, suspicion meters, reveal | ~4–7 days | Med-High (WS streaming, UI) |
+| Phase | Theme | Gate / demoable milestone | Rough effort | Risk |
+|------|-------|---------------------------|--------------|------|
+| 0 | Plumbing | mock client + config + event bus; deterministic seeded scaffold | ~0.5 day | Low |
+| 1 | Ledger + scoring | engine scores false-mass on **both** classes against the ledger | ~2–3 days | Med |
+| 2 | Replay + determinism | **GATE:** arm-swap byte-identity on mock *and* determinism demonstrated on a real provider | ~2–3 days | Med-High |
+| 3 | Blind extractor + holdout | **GATE:** per-class precision/recall within threshold on a human-labeled holdout | ~3–4 days | Med-High |
+| 4 | Estimator recovery (mock) | planted `D≈1` / null / suppression worlds are correctly recovered | ~1–2 days | Med |
+| 5 | Real-provider pilot | variance model fit; **N derived**; claims-per-world adequate | ~2–3 days | Med |
+| 6 | Pre-registration lock | primary/secondary analyses + gates frozen (OSF or equivalent) | ~0.5 day | Low |
+| 7 | Full run + analysis | 1,600 replays × ≥3 families; `(ΔC, ΔU)` estimated | ~3–5 days | Med |
 
-Effort assumes one developer; treat as relative sizing, not a schedule.
+Effort assumes one developer; relative sizing, not a schedule.
 
-## Phase 0 — Setup & plumbing
+## Phase 0 — Plumbing
 
-Goal: a skeleton you can build on, with the mock LLM and config working before any game logic.
+- [ ] Repo scaffold per the architecture's structure; `pyproject.toml`; `.env.example` (defaults to `BSQ_PROVIDER=mock`).
+- [ ] `config.py`: parse `BSQ_*` → `GameConfig`/`ProviderConfig`/`VerifierArm`; `BSQ_SEED` plumbed through.
+- [ ] `llm/base.py` + `mock_client.py` (seeded, offline) with strategic-displacer / honest / hedger impostor scripts.
+- [ ] `models.py` (`Persona`, `Proposition`, `Claim`, `Agent`, `VerifierArm`, `Game`); `events.py` append-only bus.
+- [ ] Smoke test: a seeded mock `complete()` is deterministic; the data model imports cleanly.
 
-- [ ] Repo scaffold per the architecture's project structure; `pyproject.toml`; `.env.example` (defaults to `RTT_PROVIDER=mock`).
-- [ ] `config.py`: parse `RTT_*` env vars → `ProviderConfig` + `GameConfig`; sane defaults; `RTT_SEED` plumbed through.
-- [ ] `llm/base.py`: `LLMClient` protocol + `make_client()` factory.
-- [ ] `llm/mock_client.py`: returns scripted lines; seeded; **no network**. Enough to answer "talk" and "vote" shapes.
-- [ ] `models.py`: the dataclasses (`Persona`, `Agent`, `Round`, `Game`, `Message`, `Suspicion`, configs).
-- [ ] `events.py`: event types + append-only bus.
-- [ ] One smoke test: `make_client` from env returns a mock client; a mock `complete()` is deterministic under a fixed seed.
+**DoD:** trustworthy, deterministic plumbing. No experiment yet.
 
-**Definition of Done:** `python -c "from rtt.llm import make_client; ..."` (or a `pytest`) shows the mock client producing seeded output; the data model imports cleanly. No game yet — just trustworthy plumbing.
+## Phase 1 — Ledger + ground-truth scoring on both classes
 
-## Phase 1 — Terminal auto-mode POC (the core)
+- [ ] `ledger.py`: author a balanced proposition set per game (fraction `φ` checkable), with engine-held truth for **both** classes and `topic_id` matching.
+- [ ] `engine.py`: the deliberation loop where the impostor (deception incentive) produces claims; votes/elimination provide pressure.
+- [ ] `scoring/scorer.py`: mark `Claim.is_false` vs the ledger; compute assertion-rate-normalized `C` and `U`.
+- [ ] Tests: a seeded game is deterministic; false-mass on both classes is computed correctly on planted mock transcripts.
 
-Goal: **the showpiece in its simplest form** — N agents, one secretly told to act human, M rounds of banter + suspicion votes, an elimination or two, and a printed reveal. Runs entirely on `mock`, zero keys.
+**DoD:** an end-to-end mock game emits scored claims and per-class false-mass.
 
-- [ ] `personas/`: ship ~4 distinct personas as YAML (e.g. noir detective, relentless optimist, pedantic professor, chaos-gremlin). Load them.
-- [ ] `agents/persona_agent.py`: `talk()` and `vote()` calling the LLM abstraction with the three prompt shapes.
-- [ ] `scheduler.py`: seeded turn order over alive participants; alive-set; seeded tie-breaks.
-- [ ] `engine.py`: the loop — setup & secret impostor assignment → round (announce topic → sequential talk turns) → concurrent-ish votes → tally → elimination (threshold + ties) → final verdict → reveal. Record `human_id` engine-only.
-- [ ] Vote parsing: constrained JSON, retry-once, seeded fallback.
-- [ ] `filters.py`: meta-leak blocklist + single regeneration (works against mock too, for the test).
-- [ ] `render_cli.py`: pretty terminal output — cast intro, per-turn lines, per-round tally, elimination, reveal card.
-- [ ] `cli.py`: `rtt play --mode auto --seed N --rounds M`.
-- [ ] Tests: (a) a full auto game on mock is **deterministic** for a fixed seed and ends with a correct reveal (`outcome` matches whether `verdict_id == human_id`); (b) voting/elimination/threshold/tie-break logic; (c) the meta-leak filter catches the blocklist.
+## Phase 2 — Replay + determinism (GATE)
 
-**Definition of Done:** `RTT_SEED=42 rtt play --mode auto` prints a complete, readable episode — banter, suspicion tallies, at least one elimination, and a reveal — with **no API key and no network**. Re-running the same seed reproduces it. The same command with a real `RTT_PROVIDER`/`RTT_MODEL` set produces a real-model episode through the identical loop. This is the moment the project is "alive."
+- [ ] `replay.py`: arm-swap harness; assert **byte-identical** transcripts up to the first verifier-conditioned token; log divergence point + per-token agreement; similarity-exclusion gate.
+- [ ] `verifier.py`: the five arms (A0/A1/A1-implicit/A2/A3) as immutable announcement blocks (+ optional oracle); audited to leak no ground truth.
+- [ ] Demonstrate determinism on a **real provider** (seed/temperature passthrough); quantify residual nondeterminism.
+- [ ] Tests: arm-swap byte-identity on mock; divergence logging correct.
 
-## Phase 2 — MVP (human-plays + real personas)
+**DoD (GATE):** within-world counterfactuals are exact on mock and demonstrably near-exact on a real provider — or the design is revised before proceeding.
 
-Goal: a genuinely playable, genuinely watchable game against real models, plus the human-as-impostor mode.
+## Phase 3 — Blind extractor + holdout (GATE)
 
-- [ ] `agents/human_agent.py`: `talk()` reads the user's line (stdin for now); `vote()` lets the human cast a blending vote (or auto-abstain-disguise).
-- [ ] `engine.py`: `--mode human` path — seat the user as impostor, prompt on their turn, run detective turns/votes around them, handle the user being eliminated.
-- [ ] Prompt iteration: tune persona voices and the **suspicion prompt** so detectives are *fallible but plausible* (target the "often right, satisfyingly wrong" zone from the brief). Add the `snark`/`suspicion_threshold` dials.
-- [ ] Provider clients: implement `anthropic`, `openai-compatible`, `ollama` against the `LLMClient` interface; verify env-var override of provider/model/base_url; client-side rate-limit/semaphore + 429 backoff.
-- [ ] Transcript artifact: persist the event log as JSON + a pretty-text export per game (`outcome`, tallies, full convo).
-- [ ] Difficulty/config surface: rounds, n_agents, threshold, snark via flags/env.
-- [ ] Hardening: defensive vote parsing in the wild; graceful degradation on a failed/slow agent call; basic prompt-injection handling for human input (treat as content, not instructions).
-- [ ] Tests: human-mode loop with a scripted fake-human input runs to a verdict on mock; transcript artifact round-trips.
+- [ ] `scoring/extractor.py`: map utterances → propositions, **blind to arm**.
+- [ ] Build a **human-labeled holdout**; report per-class precision/recall; implement errors-in-variables correction.
+- [ ] Pre-specify the **abort rule** on cross-class recall gap.
 
-**Definition of Done:** With a real provider configured, you can `rtt play --mode human` and feel the tension of trying not to get caught; detectives give plausible (sometimes wrong) reasons; the game saves a replayable transcript. Auto-mode still runs on mock with zero setup. At least one tester says a vote felt *fair*.
+**DoD (GATE):** extractor accuracy is measured, class-balanced within threshold, and the correction is in place.
 
-## Phase 3 — Polish & stretch (web "theater")
+## Phase 4 — Estimator recovery on mock
 
-Goal: turn the CLI transcript into a *show* in the browser, then pick off stretch items.
+- [ ] `analysis/displacement.py`: the bivariate `(ΔC, ΔU)` model; `D` secondary with Fieller/Bayes CI.
+- [ ] Plant known worlds on mock (`D≈1` displacement, null, suppression) and confirm the estimator recovers each.
+- [ ] Test: `test_estimator_recovery.py` passes for all planted regimes.
 
-- [ ] `web/server.py`: FastAPI app; a WebSocket endpoint per game channel; subscribe to the engine's event bus and forward events as JSON frames.
-- [ ] **Mid-game join**: on connect, replay the buffered event log to catch the spectator up, then stream live (Flow 3).
-- [ ] `web/static/`: the theater UI — cast panel (names, blurbs, avatars), auto-scrolling live transcript, **per-agent suspicion meters** that move with each vote, and an **animated reveal**. Keep it light (server-rendered + vanilla JS / htmx, or a tiny Svelte/Preact app — no heavy SPA).
-- [ ] Spectators are read-only (no message/vote injection); confirm fairness/injection boundaries hold over WS.
-- [ ] Run auto-mode games server-side so a browser can just *watch* the showpiece live.
-- [ ] **Persona packs**: load a roster from a directory/file via flag/env; document the pack format; ship 1–2 themed packs as examples.
+**DoD:** the estimator provably recovers known effects before it touches real data.
 
-**Stretch (pick by appetite, all optional):**
-- [ ] ELO "how human can you act" rating (human players + act-human agents vs. a fixed detective panel).
-- [ ] Tournaments/leagues across persona packs; leaderboard of sharpest detectives / longest-surviving impostors.
-- [ ] Twitch-style audience polls ("who do *you* think it is?") shown against the agents' votes — on a separate channel that never enters agent memory.
-- [ ] Highlight reel / gif export of the tensest exchange + the reveal.
+## Phase 5 — Real-provider pilot (power)
 
-**Definition of Done (Phase 3 core):** open a browser, watch a live auto-mode episode unfold — cast, streaming transcript, moving suspicion meters, dramatic reveal — and a second browser can join mid-game and be caught up correctly. The auto-on-mock CLI demo and the test suite stay green throughout.
+- [ ] Run a small real-provider pilot; fit `analysis/power.py` variance model; **derive N** for the planned MDE on the joint contrast.
+- [ ] Check claims-per-world; if too few, lengthen deliberation / extend the ledger and re-pilot.
 
-## Demoable milestones (recap)
+**DoD:** N and the MDE are justified by real-provider variance, not mock.
 
-1. **End of P1:** a self-running terminal episode with a reveal, on mock, reproducible by seed — *record this; it's the first shareable artifact.*
-2. **End of P2:** a tense human-plays game against a real model, with a saved transcript; auto still zero-setup.
-3. **End of P3:** a browser "theater" streaming a live episode with suspicion meters and a reveal; mid-game spectator join works.
+## Phase 6 — Pre-registration lock
 
-## Working agreements (carried into every phase)
+- [ ] Freeze [05-preregistration.md](05-preregistration.md): primary = H1 joint `(ΔC, ΔU)`; secondaries; the gates and abort rules; analysis code hash.
 
-- **Small, runnable steps.** Each PR/commit leaves the auto-mode-on-mock demo runnable.
-- **Mock stays green.** Never let a change break the no-key path; it's the demo *and* the CI fixture.
-- **Tests on the loop.** Keep the determinism test and voting-logic tests passing; add to them as the loop grows.
-- **Honesty in copy.** Keep the novelty framing from the brief; don't drift into overclaiming. Be explicit that auto-mode's "human" is an LLM impression.
-- **Ask before heavy deps.** Default to stdlib + a tiny set (FastAPI, an HTTP client, Pydantic-or-dataclasses, pytest). Anything larger gets a quick justification first.
+**DoD:** confirmatory vs exploratory boundary is fixed and timestamped before the full run.
+
+## Phase 7 — Full run + analysis
+
+- [ ] ~200 base worlds × 5 core arms + 200 × 3 dose arms ≈ **1,600 replays/model**, across **≥3 families** (frontier reasoner, mid-tier instruction-tuned, small open-weight).
+- [ ] Estimate the joint `(ΔC, ΔU)`; report the regime, the dose-response (H5), coverage-gaming (H6), and the secondary `D`.
+- [ ] Write up — including, prominently, the **null** if it lands (calibrated capability upper-bound).
+
+**DoD:** a defensible, pre-registered causal estimate with all controls reported.
+
+## Working agreements (every phase)
+
+- **Determinism is sacred.** Never merge a change that breaks replay identity on mock.
+- **Mock stays green** — it is the CI fixture and the estimator-recovery harness; power never comes from it.
+- **Gates are gates.** Don't pre-register until Phases 2/3/5 pass; don't run at scale until pre-registration is locked.
+- **No overclaiming in copy.** Cite the closest prior work accurately; scope the contribution to the four-ingredient combination.
+- **Ask before heavy deps.** stdlib + a small set (HTTP client, Pydantic-or-dataclasses, pytest, NumPy/statsmodels/PyMC for analysis). Anything larger gets a quick justification.
