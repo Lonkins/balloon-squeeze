@@ -1,7 +1,9 @@
 """Command-line entry point.
 
-Phase 0 ships ``version`` and ``selftest`` (a zero-setup determinism check on the
-mock provider). The experiment commands (``run``, ``replay``, ``score``) arrive in
+- ``bsq selftest`` — zero-setup determinism check on the mock provider.
+- ``bsq run`` — run one mock game and print the impostor's per-class false-mass.
+
+The remaining experiment commands (``replay``, ``score`` over saved logs) arrive in
 later phases on top of this plumbing.
 """
 
@@ -10,9 +12,11 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Sequence
+from dataclasses import replace
 
 from bsq import __version__
-from bsq.config import provider_config_from_env
+from bsq.config import game_config_from_env, provider_config_from_env, resolve_arm
+from bsq.engine import run_game
 from bsq.llm import ChatTurn, make_client
 
 
@@ -32,11 +36,34 @@ def _selftest() -> int:
     return 0 if ok else 1
 
 
+def _run(args: argparse.Namespace) -> int:
+    """Run a single mock game and report the impostor's per-class false-mass."""
+    cfg = game_config_from_env()
+    if args.rounds is not None:
+        cfg = replace(cfg, rounds=args.rounds)
+    if args.arm is not None:
+        resolve_arm(args.arm)  # validate
+        cfg = replace(cfg, verifier_arm=args.arm)
+    seed = args.seed if args.seed is not None else (provider_config_from_env().seed or 0)
+
+    result = run_game(cfg, seed)
+    seat = result.report.by_seat[result.game.impostor_id]
+    c, u = seat.checkable, seat.uncheckable
+    print(f"game seed={seed} arm={cfg.verifier_arm} impostor={result.game.impostor_id}")
+    print(f"  checkable  : false={c.n_false}/{c.n_asserted}  C={seat.c:.3f}")
+    print(f"  uncheckable: false={u.n_false}/{u.n_asserted}  U={seat.u:.3f}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="bsq", description="Balloon Squeeze")
     parser.add_argument("--version", action="version", version=f"bsq {__version__}")
     sub = parser.add_subparsers(dest="command")
     sub.add_parser("selftest", help="run a zero-setup determinism check on the mock provider")
+    run_p = sub.add_parser("run", help="run one mock game and print per-class false-mass")
+    run_p.add_argument("--seed", type=int, default=None, help="world seed (default: BSQ_SEED or 0)")
+    run_p.add_argument("--rounds", type=int, default=None, help="number of rounds")
+    run_p.add_argument("--arm", type=str, default=None, help="verifier arm (e.g. A0_off)")
     return parser
 
 
@@ -45,6 +72,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.command == "selftest":
         return _selftest()
+    if args.command == "run":
+        return _run(args)
     parser.print_help()
     return 0
 
