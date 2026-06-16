@@ -1,0 +1,49 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "balloon-squeeze"
+version = "0.0.1"
+description = "A research instrument for replay-isolated causal estimates of deception displacement in LLM agents."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Lonkins" }]
+keywords = ["llm", "ai-safety", "deception", "scalable-oversight", "multi-agent", "evaluation"]
+classifiers = [
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Private :: Do Not Upload",
+]
+# The core (mock) path is intentionally dependency-free so it runs and tests offline.
+dependencies = []
+
+[project.optional-dependencies]
+providers = ["httpx>=0.27"]                              # real LLM providers (added in later phases)
+analysis = ["numpy>=1.26", "pandas>=2.2", "statsmodels>=0.14"]  # (delta C, delta U) estimation
+dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11"]
+
+[project.scripts]
+bsq = "bsq.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bsq"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["src", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
