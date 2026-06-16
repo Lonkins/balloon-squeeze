@@ -90,3 +90,11 @@ def test_no_text_block_raises() -> None:
     client, _ = _client(_Response(content=[_Block("thinking", "...")]))
     with pytest.raises(ValueError, match="no text block"):
         client.complete(system="s", messages=[ChatTurn("user", "hi")])
+
+
+def test_real_client_requires_explicit_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Build the REAL sdk path (no injected fake). An ambient ANTHROPIC_API_KEY in the shell
+    # must NOT let an empty BSQ_API_KEY spend: construction fails closed before any SDK call.
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ambient-must-not-be-used")
+    with pytest.raises(ValueError, match="BSQ_API_KEY"):
+        AnthropicClient(ProviderConfig(provider="anthropic", model="test-model"))

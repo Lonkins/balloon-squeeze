@@ -8,7 +8,9 @@ without the package installed or a key present.
 Cost discipline is built in: ``max_tokens`` stays tight; the frozen ``system`` prefix is
 sent as a cache-control block (harmless when the prefix is below the cache minimum). The
 model name is never hard-coded — it comes from ``BSQ_MODEL`` (keep it the cheapest
-capable model for cost). The Messages API has **no seed**, so ``seed`` is accepted and
+capable model for cost). A real SDK client refuses to construct without an explicit
+``BSQ_API_KEY``, so an ambient ``ANTHROPIC_API_KEY`` in the shell can never be spent by
+accident. The Messages API has **no seed**, so ``seed`` is accepted and
 ignored. A truncated response (``stop_reason == "max_tokens"``) is raised rather than
 parsed — a half-written JSON body is the silent killer of the downstream claim counts.
 """
@@ -21,11 +23,14 @@ from bsq.llm.base import ChatTurn, ProviderConfig
 
 
 def _make_sdk_client(cfg: ProviderConfig) -> Any:
+    # Fail closed. Without an explicit key the SDK silently adopts an ambient
+    # ANTHROPIC_API_KEY from the shell and would spend on it. Require BSQ_API_KEY so a
+    # real client cannot be built — and thus cannot spend — on an unintended credential.
+    if not cfg.api_key:
+        raise ValueError("anthropic provider requires an explicit BSQ_API_KEY")
     import anthropic  # lazy: only when we actually talk to the network
 
-    kwargs: dict[str, Any] = {}
-    if cfg.api_key:
-        kwargs["api_key"] = cfg.api_key
+    kwargs: dict[str, Any] = {"api_key": cfg.api_key}
     if cfg.base_url:
         kwargs["base_url"] = cfg.base_url
     return anthropic.Anthropic(**kwargs)
