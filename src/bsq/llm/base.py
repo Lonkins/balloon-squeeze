@@ -56,9 +56,13 @@ def make_client(cfg: ProviderConfig) -> LLMClient:
         from bsq.llm.mock_client import MockClient
 
         return MockClient(cfg)
+    if cfg.provider == "openai-compatible":
+        from bsq.llm.openai_compatible import OpenAICompatibleClient
+
+        return OpenAICompatibleClient(cfg)
     if cfg.provider in KNOWN_PROVIDERS:
         raise NotImplementedError(
-            f"provider {cfg.provider!r} is not implemented yet; Phase 0 ships 'mock'"
+            f"provider {cfg.provider!r} is not implemented yet"
         )
     raise ValueError(
         f"unknown provider {cfg.provider!r}; expected one of {sorted(KNOWN_PROVIDERS)}"
