@@ -16,9 +16,10 @@ from bsq.config import resolve_arm
 from bsq.events import Event, EventBus
 from bsq.extract import extract_claims
 from bsq.ledger import author_ledger
-from bsq.models import Agent, Game, GameConfig, Persona, Role
+from bsq.models import Agent, Claim, Game, GameConfig, Persona, Role
 from bsq.rng import substream
 from bsq.scoring import ScoreReport, score_claims
+from bsq.verifier import Verification, announcement_for, verify_checkable
 
 _NAMES = ("Ash", "Bree", "Cyrus", "Dale", "Esme", "Faye", "Gus", "Hana")
 
@@ -30,6 +31,7 @@ class GameResult:
     game: Game
     report: ScoreReport
     events: tuple[Event, ...]
+    verifications: tuple[Verification, ...] = ()
 
 
 def _build_participants(cfg: GameConfig, seed: int) -> list[Agent]:
@@ -65,9 +67,14 @@ def run_game(cfg: GameConfig, seed: int) -> GameResult:
     bus.emit("game_start", n_agents=len(participants), arm=arm.name, n_propositions=len(ledger))
 
     policies = {agent.id: _policy_for(agent) for agent in participants}
-    all_claims = []
+    announcement = announcement_for(arm)
+    bus.emit("verifier_announcement", arm=arm.name, announced=announcement is not None)
+
+    all_claims: list[Claim] = []
+    verifications: list[Verification] = []
     for round_idx in range(cfg.rounds):
         bus.emit("round_start", round_idx=round_idx)
+        round_claims: list[Claim] = []
         for agent in participants:
             if not agent.alive:
                 continue
@@ -81,7 +88,18 @@ def run_game(cfg: GameConfig, seed: int) -> GameResult:
                 round_idx=round_idx,
                 n_claims=len(utterance.structured),
             )
-            all_claims.extend(extract_claims(utterance, ledger))
+            round_claims.extend(extract_claims(utterance, ledger))
+        all_claims.extend(round_claims)
+        if arm.runs_oracle:
+            round_verdicts = verify_checkable(round_claims, ledger)
+            verifications.extend(round_verdicts)
+            for verdict in round_verdicts:
+                bus.emit(
+                    "verification",
+                    round_idx=verdict.round_idx,
+                    proposition=verdict.proposition_id,
+                    correct=verdict.correct,
+                )
 
     report = score_claims(all_claims, ledger)
     game.claims = list(report.scored_claims)
@@ -94,4 +112,9 @@ def run_game(cfg: GameConfig, seed: int) -> GameResult:
         u_false=seat.uncheckable.n_false if seat else 0,
         u_asserted=seat.uncheckable.n_asserted if seat else 0,
     )
-    return GameResult(game=game, report=report, events=tuple(bus.events))
+    return GameResult(
+        game=game,
+        report=report,
+        events=tuple(bus.events),
+        verifications=tuple(verifications),
+    )
