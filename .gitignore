@@ -2,6 +2,9 @@
 # Round-table outputs, raw research dumps, scratch notes, planning artifacts.
 internal/
 
+# Local agent instructions — kept out of the public repo on purpose.
+CLAUDE.md
+
 # ─── Secrets & environment ─────────────────────────────────────────────────
 .env
 .env.*
