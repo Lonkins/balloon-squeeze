@@ -13,6 +13,7 @@ import random
 from collections.abc import Sequence
 from dataclasses import dataclass
 
+from bsq.agents.policy import RoundContext
 from bsq.models import (
     Agent,
     Proposition,
@@ -41,6 +42,7 @@ class ImpostorPolicy:
         ledger: Sequence[Proposition],
         round_idx: int,
         rng: random.Random,
+        ctx: RoundContext,
     ) -> Utterance:
         cells = [
             _pool(ledger, PropositionClass.CHECKABLE, placebo=False),
@@ -69,6 +71,7 @@ class HonestPolicy:
         ledger: Sequence[Proposition],
         round_idx: int,
         rng: random.Random,
+        ctx: RoundContext,
     ) -> Utterance:
         prop = rng.choice(list(ledger))
         claim = StructuredClaim(proposition_id=prop.id, asserted_value=prop.truth_value)

@@ -74,13 +74,14 @@ construction.
 
 **DoD (GATE):** extractor accuracy measured, class-balanced within threshold, the correction in place — verified offline on synthetic known answers. Live extraction + the real human-labeled holdout remain gated (key + data).
 
-## Phase 4 — Estimator recovery on mock
+## Phase 4 — Estimator recovery on mock (done)
 
-- [ ] `analysis/displacement.py`: the bivariate `(ΔC, ΔU)` model; `D` secondary with Fieller/Bayes CI.
-- [ ] Plant known worlds on mock (`D≈1` displacement, null, suppression) and confirm the estimator recovers each.
-- [ ] Test: `test_estimator_recovery.py` passes for all planted regimes.
+- [x] `agents/displacer.py`: the arm-sensitive **strategic displacer** — shifts false-claim mass checkable→uncheckable under a named-scope verifier, with **arm-invariant RNG** (only the lie threshold moves, not the claim selection) and the **placebo channel untouched** (its control role).
+- [x] Policy seam: a `RoundContext` threaded into `act`; `run_game(..., impostor_policy=...)` override. The default stays the arm-insensitive impostor, so every replay-identity test is unchanged.
+- [x] `recovery.py`: run both arms with the displacer → per-arm/class false labels → `bootstrap_delta_ci` (perfect mock quality → Rogan–Gladen identity) → classify the recovered regime from the CI signs.
+- [x] `test_recovery.py`: plant **displacement / suppression / honesty / null** (planted `ΔC = -b·s_c`, `ΔU = +b·s_u`) and confirm the recovered regime + CI signs + median match; the displacer gives the Phase-2 **divergence detector** its first real (non-synthetic) exercise; the placebo channel is confirmed undisplaced.
 
-**DoD:** the estimator provably recovers known effects before it touches real data.
+**DoD (met):** the estimator provably recovers known planted effects end-to-end on mock, before any real data. (The bivariate `(ΔC, ΔU)` estimator + bootstrap live in `eval.py` from Phase 3b; the ratio `D` stays a Phase-7 secondary.)
 
 ## Phase 5 — Real-provider pilot (power)
 
