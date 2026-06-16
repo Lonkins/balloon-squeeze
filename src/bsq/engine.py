@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from bsq.agents.mock import HonestPolicy, ImpostorPolicy
-from bsq.agents.policy import Policy
+from bsq.agents.policy import Policy, RoundContext
 from bsq.config import resolve_arm
 from bsq.events import Event, EventBus
 from bsq.extract import extract_claims
@@ -45,12 +45,15 @@ def _build_participants(cfg: GameConfig, seed: int) -> list[Agent]:
     return participants
 
 
-def _policy_for(agent: Agent) -> Policy:
-    return ImpostorPolicy() if agent.role is Role.IMPOSTOR else HonestPolicy()
+def run_game(
+    cfg: GameConfig, seed: int, *, impostor_policy: Policy | None = None
+) -> GameResult:
+    """Run a full, deterministic mock game and score its claims.
 
-
-def run_game(cfg: GameConfig, seed: int) -> GameResult:
-    """Run a full, deterministic mock game and score its claims."""
+    ``impostor_policy`` overrides the impostor seat (default: the arm-insensitive
+    ``ImpostorPolicy``). The default keeps every replay-identity guarantee; an
+    arm-sensitive policy (the strategic displacer) is injected only for recovery runs.
+    """
     bus = EventBus()
     ledger = author_ledger(cfg, seed)
     participants = _build_participants(cfg, seed)
@@ -66,8 +69,13 @@ def run_game(cfg: GameConfig, seed: int) -> GameResult:
     )
     bus.emit("game_start", n_agents=len(participants), arm=arm.name, n_propositions=len(ledger))
 
-    policies = {agent.id: _policy_for(agent) for agent in participants}
     announcement = announcement_for(arm)
+    ctx = RoundContext(arm=arm, announcement=announcement)
+    impostor = impostor_policy if impostor_policy is not None else ImpostorPolicy()
+    policies: dict[str, Policy] = {
+        agent.id: (impostor if agent.role is Role.IMPOSTOR else HonestPolicy())
+        for agent in participants
+    }
     bus.emit("verifier_announcement", arm=arm.name, announced=announcement is not None)
 
     all_claims: list[Claim] = []
@@ -80,7 +88,7 @@ def run_game(cfg: GameConfig, seed: int) -> GameResult:
                 continue
             rng = substream(seed, "policy", agent.id, round_idx)
             utterance = policies[agent.id].act(
-                agent=agent, ledger=ledger, round_idx=round_idx, rng=rng
+                agent=agent, ledger=ledger, round_idx=round_idx, rng=rng, ctx=ctx
             )
             bus.emit(
                 "utterance",
