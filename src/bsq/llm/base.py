@@ -60,6 +60,10 @@ def make_client(cfg: ProviderConfig) -> LLMClient:
         from bsq.llm.openai_compatible import OpenAICompatibleClient
 
         return OpenAICompatibleClient(cfg)
+    if cfg.provider == "anthropic":
+        from bsq.llm.anthropic_client import AnthropicClient
+
+        return AnthropicClient(cfg)
     if cfg.provider in KNOWN_PROVIDERS:
         raise NotImplementedError(
             f"provider {cfg.provider!r} is not implemented yet"

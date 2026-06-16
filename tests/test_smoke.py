@@ -37,7 +37,7 @@ def test_mock_seed_changes_output_deterministically() -> None:
 
 def test_make_client_rejects_unimplemented_and_unknown_providers() -> None:
     with pytest.raises(NotImplementedError):
-        make_client(ProviderConfig(provider="anthropic"))
+        make_client(ProviderConfig(provider="ollama"))
     with pytest.raises(ValueError):
         make_client(ProviderConfig(provider="does-not-exist"))
 
