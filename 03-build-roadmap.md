@@ -36,14 +36,21 @@ Effort assumes one developer; relative sizing, not a schedule.
 
 **DoD:** an end-to-end mock game emits scored claims and per-class false-mass.
 
-## Phase 2 — Replay + determinism (GATE)
+## Phase 2 — Replay + determinism (GATE — mock half closed; real-provider half BLOCKED-ON-P3)
 
-- [ ] `replay.py`: arm-swap harness; assert **byte-identical** transcripts up to the first verifier-conditioned token; log divergence point + per-token agreement; similarity-exclusion gate.
-- [ ] `verifier.py`: the five arms (A0/A1/A1-implicit/A2/A3) as immutable announcement blocks (+ optional oracle); audited to leak no ground truth.
-- [ ] Demonstrate determinism on a **real provider** (seed/temperature passthrough); quantify residual nondeterminism.
-- [ ] Tests: arm-swap byte-identity on mock; divergence logging correct.
+The replay-identity contract compares the **agent claim stream** (the arm-invariant
+medium), not the verifier-injected events. RNG sub-streams are arm-decoupled, so an
+arm-insensitive mock yields a byte-identical stream across arms (`divergence == EOF`);
+`prefix_similarity` + `divergence_index` generalize to real-model tokens later.
 
-**DoD (GATE):** within-world counterfactuals are exact on mock and demonstrably near-exact on a real provider — or the design is revised before proceeding.
+- [x] `verifier.py`: the five arms as immutable, **constant-per-arm** announcement blocks (no truth, no proposition ids, no counts, no RNG) + the oracle, which verifies **only checkable** claims — proven by an uncheckable-truth-flip invariance test.
+- [x] `replay.py`: arm-swap harness over the agent claim stream; `divergence_index` + `prefix_similarity`; similarity-exclusion gate. Divergence detector tested against a **synthetic divergent stream**, never only-identical inputs.
+- [x] Engine: emits the announcement + per-round oracle verifications; the agent claim stream stays byte-identical across arms.
+- [x] `bsq replay`: arm-swap identity + determinism check on the configured (mock) provider.
+- [x] Tests: arm-swap identity across all five arms; determinism; divergence detection; oracle leak invariance; oracle-trace identity across A1 / A1-implicit / A2.
+- [ ] **BLOCKED-ON-P3:** demonstrate determinism on a **real provider** (seed/temperature passthrough). Needs the real client (Phase 3) + an API key; tracked by a skipped test and runnable via `bsq replay` once wired. **Do not treat the gate as fully closed until this is done.**
+
+**DoD (split).** *Mock half (closed):* within-world counterfactuals are byte-exact on mock and the replay/determinism machinery is verified offline. *Real-provider half (open, Phase 3):* same-world / same-arm reproducibility on a real model — blocked on the real client + key.
 
 ## Phase 3 — Blind extractor + holdout (GATE)
 

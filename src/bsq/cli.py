@@ -18,6 +18,8 @@ from bsq import __version__
 from bsq.config import game_config_from_env, provider_config_from_env, resolve_arm
 from bsq.engine import run_game
 from bsq.llm import ChatTurn, make_client
+from bsq.models import STANDARD_ARMS
+from bsq.replay import arm_swap_is_identical, is_deterministic
 
 
 def _selftest() -> int:
@@ -55,6 +57,20 @@ def _run(args: argparse.Namespace) -> int:
     return 0
 
 
+def _replay(args: argparse.Namespace) -> int:
+    """Check the within-world replay invariants on the configured provider (mock)."""
+    cfg = game_config_from_env()
+    seed = args.seed if args.seed is not None else (provider_config_from_env().seed or 0)
+    arms = list(STANDARD_ARMS)
+    identical = arm_swap_is_identical(cfg, seed, arms)
+    deterministic = all(is_deterministic(cfg, seed, arm) for arm in arms)
+    print(f"replay seed={seed} arms={arms}")
+    print(f"  arm-swap identical (agent claim stream): {'OK' if identical else 'FAILED'}")
+    print(f"  deterministic (same seed+arm twice)    : {'OK' if deterministic else 'FAILED'}")
+    print("  note: real-provider determinism is BLOCKED-ON-P3 (needs a real client + key)")
+    return 0 if identical and deterministic else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="bsq", description="Balloon Squeeze")
     parser.add_argument("--version", action="version", version=f"bsq {__version__}")
@@ -64,6 +80,8 @@ def build_parser() -> argparse.ArgumentParser:
     run_p.add_argument("--seed", type=int, default=None, help="world seed (default: BSQ_SEED or 0)")
     run_p.add_argument("--rounds", type=int, default=None, help="number of rounds")
     run_p.add_argument("--arm", type=str, default=None, help="verifier arm (e.g. A0_off)")
+    replay_p = sub.add_parser("replay", help="check arm-swap identity + determinism on mock")
+    replay_p.add_argument("--seed", type=int, default=None, help="world seed (default: BSQ_SEED)")
     return parser
 
 
@@ -74,6 +92,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _selftest()
     if args.command == "run":
         return _run(args)
+    if args.command == "replay":
+        return _replay(args)
     parser.print_help()
     return 0
 
