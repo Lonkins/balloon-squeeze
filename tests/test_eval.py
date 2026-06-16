@@ -9,9 +9,11 @@ from bsq.eval import (
     ClassQuality,
     ConfusionCell,
     ExtractionQuality,
+    RegimeVerdict,
     bootstrap_delta_ci,
     detection_recall_gap_by_arm,
     extraction_quality,
+    joint_regime,
     per_arm_extraction_recall,
     recall_gap_abort,
     rogan_gladen,
@@ -165,3 +167,67 @@ def test_bootstrap_is_deterministic() -> None:
     a = bootstrap_delta_ci(false_labels, _perfect_quality(), n_draws=500, seed=7)
     b = bootstrap_delta_ci(false_labels, _perfect_quality(), n_draws=500, seed=7)
     assert a[CHECKABLE] == b[CHECKABLE]
+
+
+# --- joint regime classifier (the primary estimand: H1/H2/H3/H4) -----------
+
+def _world(
+    c0: float, c1: float, u0: float, u1: float, n: int = 40
+) -> dict[tuple[str, PropositionClass], list[bool]]:
+    return {
+        ("A0", CHECKABLE): _labels(c0, n),
+        ("A1", CHECKABLE): _labels(c1, n),
+        ("A0", UNCHECKABLE): _labels(u0, n),
+        ("A1", UNCHECKABLE): _labels(u1, n),
+    }
+
+
+def test_joint_regime_detects_displacement() -> None:
+    # ΔC < 0 (checkable false-rate falls), ΔU > 0 (uncheckable rises)
+    v = joint_regime(_world(0.7, 0.2, 0.2, 0.7), _perfect_quality(), n_draws=3000, seed=1)
+    assert isinstance(v, RegimeVerdict)
+    assert v.regime == "displacement"
+    assert v.p_displacement > 0.9
+    assert v.delta_c.hi < 0 and v.delta_u.lo > 0
+
+
+def test_joint_regime_detects_honesty() -> None:
+    # both false-rates fall
+    v = joint_regime(_world(0.7, 0.2, 0.7, 0.2), _perfect_quality(), n_draws=3000, seed=1)
+    assert v.regime == "honesty"
+    assert v.delta_c.hi < 0 and v.delta_u.hi < 0
+
+
+def test_joint_regime_detects_suppression() -> None:
+    # checkable falls, uncheckable unchanged
+    v = joint_regime(_world(0.7, 0.2, 0.4, 0.4), _perfect_quality(), n_draws=3000, seed=1)
+    assert v.regime == "suppression"
+    assert v.delta_c.hi < 0
+    assert v.delta_u.lo <= 0 <= v.delta_u.hi
+
+
+def test_joint_regime_detects_null() -> None:
+    # no arm effect on either class -> joint CI contains the origin
+    v = joint_regime(_world(0.4, 0.4, 0.4, 0.4), _perfect_quality(), n_draws=3000, seed=1)
+    assert v.regime == "null"
+    assert v.delta_c.lo <= 0 <= v.delta_c.hi
+    assert v.delta_u.lo <= 0 <= v.delta_u.hi
+    assert v.displacement_upper_bound >= 0.0  # calibrated bound reported for H4
+
+
+def test_joint_regime_unidentifiable_when_class_empty() -> None:
+    labels = _world(0.4, 0.4, 0.4, 0.4)
+    labels[("A0", CHECKABLE)] = []  # no A0 checkable assertions
+    v = joint_regime(labels, _perfect_quality(), n_draws=300, seed=2)
+    assert v.regime == "unidentifiable"
+
+
+def test_joint_regime_quadrant_probs_sum_to_one() -> None:
+    v = joint_regime(_world(0.7, 0.2, 0.2, 0.7), _perfect_quality(), n_draws=2000, seed=5)
+    assert abs(sum(v.quadrant_probs.values()) - 1.0) < 1e-9
+
+
+def test_joint_regime_is_deterministic() -> None:
+    a = joint_regime(_world(0.7, 0.2, 0.2, 0.7), _perfect_quality(), n_draws=800, seed=9)
+    b = joint_regime(_world(0.7, 0.2, 0.2, 0.7), _perfect_quality(), n_draws=800, seed=9)
+    assert a == b
