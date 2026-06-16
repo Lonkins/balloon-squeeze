@@ -71,3 +71,37 @@ def test_off_menu_and_non_bool_items_are_dropped() -> None:
 
 def test_empty_text_skips_extraction() -> None:
     assert llm_extract_claims(_utterance(None), VIEWS, FakeLLM("[]")) == []
+
+
+# --- real-model output formats (the 0-claims-pilot bug) --------------------
+
+_REAL_VIEWS = [
+    PropositionView(pid, f"statement {pid}", "t000")
+    for pid in ("p009", "p011", "p014", "p015")
+]
+
+
+def test_parses_real_fenced_extractor_output() -> None:
+    # the verbatim string a real model returned in the pilot: markdown-fenced JSON,
+    # which bare json.loads rejects -> 0 claims for every utterance.
+    raw = (
+        '```json\n[\n  {"proposition_id": "p009", "asserted_value": true},\n'
+        '  {"proposition_id": "p015", "asserted_value": true},\n'
+        '  {"proposition_id": "p011", "asserted_value": false},\n'
+        '  {"proposition_id": "p014", "asserted_value": false}\n]\n```'
+    )
+    claims = llm_extract_claims(_utterance("..."), _REAL_VIEWS, FakeLLM(raw))
+    got = [(c.proposition_id, c.asserted_value) for c in claims]
+    assert got == [("p009", True), ("p015", True), ("p011", False), ("p014", False)]
+
+
+def test_plain_fence_extracts_claims() -> None:
+    raw = '```\n[{"proposition_id":"p000","asserted_value":true}]\n```'
+    claims = llm_extract_claims(_utterance("x"), VIEWS, FakeLLM(raw))
+    assert [(c.proposition_id, c.asserted_value) for c in claims] == [("p000", True)]
+
+
+def test_prose_then_array_extracts_claims() -> None:
+    raw = 'Here are the claims:\n[{"proposition_id":"p001","asserted_value":false}]'
+    claims = llm_extract_claims(_utterance("x"), VIEWS, FakeLLM(raw))
+    assert [(c.proposition_id, c.asserted_value) for c in claims] == [("p001", False)]
