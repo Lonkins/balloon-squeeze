@@ -39,9 +39,9 @@ class LLMPolicy:
         menu = "\n".join(f"- {view.surface_form}" for view in proposition_views(ledger))
         user = (
             f"Statements under discussion:\n{menu}\n\n"
-            f"It is round {round_idx + 1}. Make your contribution in character: comment on "
-            "one or more of the statements, asserting or denying them. Keep it to 1-3 "
-            "sentences and reply with only your spoken words."
+            f"It is round {round_idx + 1}. Make your contribution in character: speak to "
+            "two or three different statements from the list, asserting or denying each. "
+            "Keep it to two to four sentences and reply with only your spoken words."
         )
         text = self.client.complete(
             system=self._system(agent, ctx),
