@@ -16,15 +16,35 @@ task.
 
 from __future__ import annotations
 
+import hashlib
 import random
 
 from bsq.models import GameConfig, Proposition, PropositionClass
 from bsq.rng import substream
 
+# Neutral subjects so agents can speak naturally. None encode class or truth.
+_SUBJECTS = (
+    "the quarterly budget",
+    "the warehouse shipment",
+    "the rooftop garden",
+    "the new hiring plan",
+    "the weekend schedule",
+    "the parking arrangement",
+    "the catering order",
+    "the office relocation",
+)
+
 
 def surface_form_for(proposition_id: str) -> str:
-    """A class-blind, truth-independent statement form — a pure function of the id."""
-    return f"the claim recorded as {proposition_id}"
+    """A class-blind, truth-independent statement form — a pure function of the id.
+
+    Lightly naturalized so agents can talk about it, with the (opaque) id kept as a unique
+    anchor the extractor maps back to. Depends only on the id, so it leaks neither class
+    nor truth.
+    """
+    digest = hashlib.sha256(proposition_id.encode("utf-8")).hexdigest()
+    subject = _SUBJECTS[int(digest[:8], 16) % len(_SUBJECTS)]
+    return f"{subject} (item {proposition_id})"
 
 
 def _balanced_truth(n: int, rng: random.Random) -> list[bool]:
