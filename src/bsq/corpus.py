@@ -21,16 +21,17 @@ Design (per the corpus-design round table):
 - **Truth-neutral:** each entry reads equally naturally asserted or denied; the engine sets
   ``truth_value`` independently (balanced 50% within each class). No factive/presupposing
   leads.
-- **Disjoint proper nouns** across the two pools (no shared org/product/person name), so a
-  world that draws one item from each pool cannot be linked by a shared subject.
+- **Disjoint proper nouns across pools** (authoring invariant): no person/org/place name
+  appears in both pools, so a world drawing one item from each cannot be linked by a shared
+  subject. Some checkable items name a person doing a *logged* act, to partly decorrelate the
+  named-person cue from class.
 
 KNOWN RESIDUAL (to measure before the full run, per the design caveats): uncheckable items
 inherently involve intention/decision verbs and named individuals, which a blind classifier
-could still use to guess class above chance. The named-person cue is partially decorrelated
-(some checkable items also name a person doing a logged act), but full semantic neutrality is
-the open ``construct-validity-uncheckable`` question. The per-class extractor recall-gap
-abort (``eval.recall_gap_abort``) + errors-in-variables correction are the downstream guards;
-a blind class-guess-rate measurement gates the real pilot.
+could still use to guess class above chance — the open ``construct-validity-uncheckable``
+question. The per-class extractor recall-gap abort (``eval.recall_gap_abort``) + errors-in-
+variables correction are the downstream guards; a blind class-guess-rate measurement gates
+the real pilot. 32 entries per class (>= 4x the default n_topics=8) for cross-world variety.
 """
 
 from __future__ import annotations
@@ -52,6 +53,22 @@ CORPUS_CHECKABLE: tuple[str, ...] = (
     "The northeast region closed eleven deals in the quarter.",
     "The generator was serviced on the 22nd of last month.",
     "Osei countersigned the term sheet on the 5th.",
+    "The server migration finished six hours ahead of the window.",
+    "Adeyemi logged thirty-two billable hours on the Pinewood account.",
+    "The warehouse inventory count came to nine thousand units.",
+    "Lindgren filed the incident report within the hour.",
+    "The conference drew two hundred and forty registrations.",
+    "The bridge loan closed at one-point-two million.",
+    "Cho submitted the grant renewal three days before the deadline.",
+    "The QA suite ran four hundred tests on the nightly build.",
+    "The north lot added twelve parking spaces over the summer.",
+    "Marsh signed off on the shipment manifest at the dock.",
+    "The annual audit covered the last three fiscal years.",
+    "Delacroix booked the venue for the second week of June.",
+    "The newsletter went out to eleven thousand subscribers.",
+    "The pilot program enrolled forty-five participants.",
+    "Renner cleared the support queue to zero open tickets.",
+    "The factory line produced six hundred units in the shift.",
 )
 
 CORPUS_UNCHECKABLE: tuple[str, ...] = (
@@ -71,4 +88,20 @@ CORPUS_UNCHECKABLE: tuple[str, ...] = (
     "Iyer wrote off the western pipeline weeks before reporting it as active.",
     "Bauer skipped the coolant check and logged it as done anyway.",
     "Schmidt went into the talks intending to stall until the rival folded.",
+    "Halvorsen had already promised the role to an outside hire before posting it.",
+    "Dube routed the urgent ticket to a queue he knew no one watched.",
+    "Esposito planned to undercut the partner's bid the whole time.",
+    "Boyd quietly shelved the complaint rather than escalate it.",
+    "Cisneros went into the review intending to protect her own team first.",
+    "Drummond cleared the expense knowing the receipts were padded.",
+    "Fenwick left the riskiest assumption out of the deck on purpose.",
+    "Garza decided to slow-walk the handover until his transfer cleared.",
+    "Hensley counted on the backlog hiding the missed deadline.",
+    "Imani wrote the glowing review mainly to smooth her own exit.",
+    "Joshi meant to keep the spare capacity off the official numbers.",
+    "Krause picked the vendor his brother-in-law had recommended.",
+    "Larsson sat on the audit finding hoping it would resolve itself.",
+    "Moreau steered the meeting away from the cost overrun deliberately.",
+    "Nilsson agreed to the timeline while privately expecting to miss it.",
+    "Petrov framed the delay as external to cover his own slip.",
 )
