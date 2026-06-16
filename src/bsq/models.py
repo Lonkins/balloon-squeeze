@@ -60,6 +60,29 @@ class Claim:
 
 
 @dataclass(frozen=True, slots=True)
+class StructuredClaim:
+    """A claim already mapped to a proposition (the mock path emits these directly)."""
+
+    proposition_id: str
+    asserted_value: bool
+
+
+@dataclass(frozen=True, slots=True)
+class Utterance:
+    """What an agent says in a turn.
+
+    The mock path fills ``structured``; a real model fills ``text`` and the Phase-3
+    extractor turns it into claims. Both flow through ``extract_claims`` so the engine
+    never depends on which path produced the utterance.
+    """
+
+    speaker_id: str
+    round_idx: int
+    structured: tuple[StructuredClaim, ...] = ()
+    text: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class VerifierArm:
     """An experimental arm — the manipulated variable. Differs only in announcement."""
 
@@ -95,7 +118,9 @@ class Agent:
 class GameConfig:
     n_agents: int = 5
     rounds: int = 4
-    checkability_fraction: float = 0.5  # phi
+    n_topics: int = 8  # ledger size: each topic yields one checkable + one uncheckable prop
+    placebo_fraction: float = 0.25  # share of topics that are placebo-irrelevant controls
+    checkability_fraction: float = 0.5  # phi: verifier coverage (used from Phase 2 on)
     verifier_arm: str = "A0_off"
     eliminate_between_rounds: bool = True
     topic_deck: tuple[str, ...] = ()
