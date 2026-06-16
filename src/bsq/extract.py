@@ -9,6 +9,7 @@ scoring stays blind to which path produced them.
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Callable, Sequence
 
 from bsq.llm.base import ChatTurn, LLMClient
@@ -76,12 +77,39 @@ def llm_extract_claims(
     return _parse_extraction(raw, utterance, {v.id for v in views})
 
 
+_FENCE = re.compile(r"^```[a-zA-Z0-9]*\s*|\s*```$")
+
+
+def _coerce_json(raw: str) -> object | None:
+    """Parse model JSON, tolerating a markdown code fence or surrounding prose.
+
+    Real models routinely wrap the JSON list in ```` ```json … ``` ```` or add a
+    preamble; a bare ``json.loads`` rejects both and silently drops every claim (the bug
+    the first real pilot surfaced). Strip a fence, else fall back to the first ``[…]`` array.
+    """
+    if not isinstance(raw, str):
+        return None
+    text = raw.strip()
+    if text.startswith("```"):
+        text = _FENCE.sub("", text).strip()
+    try:
+        parsed: object = json.loads(text)
+        return parsed
+    except (json.JSONDecodeError, TypeError):
+        pass
+    match = re.search(r"\[[\s\S]*\]", text)
+    if match is None:
+        return None
+    try:
+        parsed = json.loads(match.group(0))
+    except (json.JSONDecodeError, TypeError):
+        return None
+    return parsed
+
+
 def _parse_extraction(raw: str, utterance: Utterance, valid_ids: set[str]) -> list[Claim]:
     """Defensively parse extractor output; drop anything malformed or off-menu."""
-    try:
-        items = json.loads(raw)
-    except (json.JSONDecodeError, TypeError):
-        return []
+    items = _coerce_json(raw)
     if not isinstance(items, list):
         return []
     claims: list[Claim] = []
