@@ -5,27 +5,32 @@ from __future__ import annotations
 import dataclasses
 import re
 
-from bsq.ledger import author_ledger, surface_form_for
+from bsq.corpus import CORPUS_CHECKABLE, CORPUS_UNCHECKABLE
+from bsq.ledger import author_ledger
 from bsq.models import GameConfig
 from bsq.views import VIEW_FIELDS, PropositionView, proposition_views
 
-
-def test_surface_form_is_a_pure_function_of_the_id() -> None:
-    assert surface_form_for("p007") == surface_form_for("p007")
-    assert surface_form_for("p007") != surface_form_for("p008")
+_CORPUS = set(CORPUS_CHECKABLE) | set(CORPUS_UNCHECKABLE)
 
 
-def test_surface_form_carries_no_class_or_truth_cue() -> None:
-    for token in ("p000", "p123"):
-        text = surface_form_for(token).lower()
+def test_surface_forms_are_deterministic_and_distinct_within_a_world() -> None:
+    a = {p.id: p.surface_form for p in author_ledger(GameConfig(), 7)}
+    b = {p.id: p.surface_form for p in author_ledger(GameConfig(), 7)}
+    assert a == b  # same world seed -> identical id->form map (replay-safe)
+    assert len(set(a.values())) == len(a)  # and no two forms in a world look alike
+
+
+def test_surface_forms_carry_no_class_or_truth_cue() -> None:
+    for text in _CORPUS:
+        low = text.lower()
         for leak in ("checkable", "uncheckable", "true", "false"):
-            assert leak not in text
+            assert leak not in low
 
 
-def test_ledger_ids_are_opaque() -> None:
+def test_ledger_ids_are_opaque_and_forms_come_from_the_corpus() -> None:
     for p in author_ledger(GameConfig(), 4):
         assert re.fullmatch(r"p\d{3}", p.id)  # opaque: no class/truth in the id
-        assert p.surface_form == surface_form_for(p.id)
+        assert p.surface_form in _CORPUS
 
 
 def test_ids_are_shuffled_not_positional() -> None:
