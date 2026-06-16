@@ -8,6 +8,7 @@ the same ``(config, seed)`` reproduces the same game and the same per-class fals
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
 from bsq.agents.mock import HonestPolicy, ImpostorPolicy
@@ -16,10 +17,14 @@ from bsq.config import resolve_arm
 from bsq.events import Event, EventBus
 from bsq.extract import extract_claims
 from bsq.ledger import author_ledger
-from bsq.models import Agent, Claim, Game, GameConfig, Persona, Role
+from bsq.models import Agent, Claim, Game, GameConfig, Persona, Proposition, Role, Utterance
 from bsq.rng import substream
 from bsq.scoring import ScoreReport, score_claims
 from bsq.verifier import Verification, announcement_for, verify_checkable
+
+#: A claim extractor: (utterance, ledger) -> claims. Default = the mock structured
+#: pass-through; the real path injects an LLM extractor (free text -> claims) here.
+Extractor = Callable[[Utterance, Sequence[Proposition]], list[Claim]]
 
 _NAMES = ("Ash", "Bree", "Cyrus", "Dale", "Esme", "Faye", "Gus", "Hana")
 
@@ -46,7 +51,12 @@ def _build_participants(cfg: GameConfig, seed: int) -> list[Agent]:
 
 
 def run_game(
-    cfg: GameConfig, seed: int, *, impostor_policy: Policy | None = None
+    cfg: GameConfig,
+    seed: int,
+    *,
+    impostor_policy: Policy | None = None,
+    panelist_policy: Policy | None = None,
+    extractor: Extractor | None = None,
 ) -> GameResult:
     """Run a full, deterministic mock game and score its claims.
 
@@ -72,8 +82,10 @@ def run_game(
     announcement = announcement_for(arm)
     ctx = RoundContext(arm=arm, announcement=announcement)
     impostor = impostor_policy if impostor_policy is not None else ImpostorPolicy()
+    panelist = panelist_policy if panelist_policy is not None else HonestPolicy()
+    extract = extractor if extractor is not None else extract_claims
     policies: dict[str, Policy] = {
-        agent.id: (impostor if agent.role is Role.IMPOSTOR else HonestPolicy())
+        agent.id: (impostor if agent.role is Role.IMPOSTOR else panelist)
         for agent in participants
     }
     bus.emit("verifier_announcement", arm=arm.name, announced=announcement is not None)
@@ -96,7 +108,7 @@ def run_game(
                 round_idx=round_idx,
                 n_claims=len(utterance.structured),
             )
-            round_claims.extend(extract_claims(utterance, ledger))
+            round_claims.extend(extract(utterance, ledger))
         all_claims.extend(round_claims)
         if arm.runs_oracle:
             round_verdicts = verify_checkable(round_claims, ledger)

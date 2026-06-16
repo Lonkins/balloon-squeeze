@@ -9,11 +9,11 @@ scoring stays blind to which path produced them.
 from __future__ import annotations
 
 import json
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 
 from bsq.llm.base import ChatTurn, LLMClient
 from bsq.models import Claim, Proposition, Utterance
-from bsq.views import PropositionView
+from bsq.views import PropositionView, proposition_views
 
 
 def extract_claims(utterance: Utterance, ledger: Sequence[Proposition]) -> list[Claim]:
@@ -100,3 +100,20 @@ def _parse_extraction(raw: str, utterance: Utterance, valid_ids: set[str]) -> li
                 )
             )
     return claims
+
+
+def make_llm_extractor(
+    client: LLMClient, *, max_tokens: int = 512
+) -> Callable[[Utterance, Sequence[Proposition]], list[Claim]]:
+    """Build an engine-compatible extractor that maps free text -> claims via a model.
+
+    Wraps ``llm_extract_claims`` with the safe proposition-view projection and a client,
+    so it slots into ``run_game(extractor=...)`` in place of the mock pass-through.
+    """
+
+    def _extract(utterance: Utterance, ledger: Sequence[Proposition]) -> list[Claim]:
+        return llm_extract_claims(
+            utterance, proposition_views(ledger), client, max_tokens=max_tokens
+        )
+
+    return _extract
