@@ -2,10 +2,16 @@
 
 Each topic yields a matched pair: one checkable and one uncheckable proposition. This
 fully crosses class with topic, so the checkable/uncheckable distinction is never
-confounded with topic. Truth values are balanced *independently within each class* to
-exactly 50% true, which forces equal truth marginals across classes without making one
-class's truth predictable from the other's. A configurable share of topics is flagged
-placebo-irrelevant — orthogonal to class — to serve as the zero-displacement control.
+confounded with topic. Truth values are balanced independently within each class to
+exactly 50% true (equal marginals, no cross-class leak). A configurable share of topics
+is flagged placebo-irrelevant — orthogonal to class — to serve as the zero-displacement
+control.
+
+Two properties matter for the real-model extractor (Phase 3): proposition **ids are
+opaque** (shuffled, never encoding class or truth) and **surface forms are a pure
+function of the id** (so they cannot leak class or truth either). The synthetic surface
+forms here are placeholders; an authored natural-language corpus is a separate data
+task.
 """
 
 from __future__ import annotations
@@ -14,6 +20,11 @@ import random
 
 from bsq.models import GameConfig, Proposition, PropositionClass
 from bsq.rng import substream
+
+
+def surface_form_for(proposition_id: str) -> str:
+    """A class-blind, truth-independent statement form — a pure function of the id."""
+    return f"the claim recorded as {proposition_id}"
 
 
 def _balanced_truth(n: int, rng: random.Random) -> list[bool]:
@@ -34,32 +45,32 @@ def author_ledger(cfg: GameConfig, world_seed: int) -> list[Proposition]:
     n_placebo = round(cfg.n_topics * cfg.placebo_fraction)
     placebo_topics = set(rng.sample(range(cfg.n_topics), n_placebo)) if n_placebo else set()
 
-    # Truth balanced to 50% per class, independently — equal marginals, no cross-class leak.
     checkable_truth = _balanced_truth(cfg.n_topics, rng)
     uncheckable_truth = _balanced_truth(cfg.n_topics, rng)
+
+    # Opaque ids, shuffled so an id value tracks neither topic order nor class.
+    id_pool = [f"p{i:03d}" for i in range(2 * cfg.n_topics)]
+    rng.shuffle(id_pool)
+    pool = iter(id_pool)
 
     ledger: list[Proposition] = []
     for t in range(cfg.n_topics):
         topic_id = f"t{t:03d}"
         is_placebo = t in placebo_topics
-        ledger.append(
-            Proposition(
-                id=f"{topic_id}-c",
-                class_=PropositionClass.CHECKABLE,
-                truth_value=checkable_truth[t],
-                topic_id=topic_id,
-                agent_verifiable=True,
-                is_placebo_irrelevant=is_placebo,
+        for cls, truth, verifiable in (
+            (PropositionClass.CHECKABLE, checkable_truth[t], True),
+            (PropositionClass.UNCHECKABLE, uncheckable_truth[t], False),
+        ):
+            pid = next(pool)
+            ledger.append(
+                Proposition(
+                    id=pid,
+                    class_=cls,
+                    truth_value=truth,
+                    topic_id=topic_id,
+                    agent_verifiable=verifiable,
+                    is_placebo_irrelevant=is_placebo,
+                    surface_form=surface_form_for(pid),
+                )
             )
-        )
-        ledger.append(
-            Proposition(
-                id=f"{topic_id}-u",
-                class_=PropositionClass.UNCHECKABLE,
-                truth_value=uncheckable_truth[t],
-                topic_id=topic_id,
-                agent_verifiable=False,
-                is_placebo_irrelevant=is_placebo,
-            )
-        )
     return ledger

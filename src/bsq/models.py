@@ -39,12 +39,13 @@ class Persona:
 class Proposition:
     """The unit of measurement. Engine authors it and holds its truth."""
 
-    id: str
+    id: str  # opaque: never encodes class or truth
     class_: PropositionClass
     truth_value: bool
     topic_id: str
     agent_verifiable: bool  # True only for checkable propositions
     is_placebo_irrelevant: bool = False  # control set that must show zero displacement
+    surface_form: str = ""  # class-blind, truth-independent; the only content the extractor sees
 
 
 @dataclass(slots=True)

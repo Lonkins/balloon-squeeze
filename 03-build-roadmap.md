@@ -52,13 +52,27 @@ arm-insensitive mock yields a byte-identical stream across arms (`divergence == 
 
 **DoD (split).** *Mock half (closed):* within-world counterfactuals are byte-exact on mock and the replay/determinism machinery is verified offline. *Real-provider half (open, Phase 3):* same-world / same-arm reproducibility on a real model — blocked on the real client + key.
 
-## Phase 3 — Blind extractor + holdout (GATE)
+## Phase 3 — Real models enter: extractor + holdout (GATE — split 3a / 3b)
 
-- [ ] `scoring/extractor.py`: map utterances → propositions, **blind to arm**.
-- [ ] Build a **human-labeled holdout**; report per-class precision/recall; implement errors-in-variables correction.
-- [ ] Pre-specify the **abort rule** on cross-class recall gap.
+Real models produce free text, so propositions gain **class-blind, truth-independent
+surface forms** (a pure function of an **opaque** id), and the extractor only ever sees
+a `PropositionView` (id, surface form, topic) — blind to truth, class, and arm by
+construction.
 
-**DoD (GATE):** extractor accuracy is measured, class-balanced within threshold, and the correction is in place.
+**Phase 3a — extractor + real client (done):**
+- [x] `surface_form` on `Proposition`; opaque ids; class-blind surface forms.
+- [x] `views.py`: `PropositionView` projection that structurally strips truth/class/placebo/arm.
+- [x] `llm/openai_compatible.py`: real client (httpx); seed/temperature passthrough; wire format MockTransport-tested offline.
+- [x] `llm_extract_claims` behind the `extract_claims` seam (FakeLLMClient-tested, incl. malformed / off-menu / non-bool paths).
+
+**Phase 3b — holdout + measurement correction (next):**
+- [ ] Per-class **detection recall** + a falseness-label **sensitivity/specificity**, **class-stratified** (pooling is the silent invalidator).
+- [ ] **Rogan–Gladen** correction of C/U with a **bootstrap** CI on `(ΔC, ΔU)`.
+- [ ] **Abort rule:** cross-class recall gap > 0.10, or either class recall < 0.85.
+- [ ] Eval machinery on a **synthetic** labeled fixture (verifies the math). A **real human-labeled holdout** is a separate data-collection task — gated, marked by a skipped test; never fabricated.
+- [ ] **Identifiability guard (the key threat):** an announced verifier can make the impostor's text harder to extract, and that recall drop is mechanically indistinguishable from displacement. Measure **per-arm extraction recall** and treat arm-correlated extraction loss as a covariate, not as `(ΔC, ΔU)`.
+
+**DoD (GATE):** extractor accuracy measured, class-balanced within threshold, and the correction in place; live extraction and the real human-labeled holdout remain gated (key + data).
 
 ## Phase 4 — Estimator recovery on mock
 
