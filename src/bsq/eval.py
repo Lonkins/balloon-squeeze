@@ -224,29 +224,29 @@ def _percentile(sorted_vals: Sequence[float], q: float) -> float:
     return sorted_vals[low] * (1.0 - frac) + sorted_vals[high] * frac
 
 
-def bootstrap_delta_ci(
+_CLASSES = (PropositionClass.CHECKABLE, PropositionClass.UNCHECKABLE)
+
+
+def _joint_draws(
     false_labels: Mapping[tuple[str, PropositionClass], Sequence[bool]],
     quality: ExtractionQuality,
     *,
-    n_draws: int = 10_000,
-    alpha: float = 0.05,
+    n_draws: int,
     seed: int,
-    eps: float = _SINGULAR_EPS,
-    max_unidentifiable: float = _MAX_UNIDENTIFIABLE,
-) -> dict[PropositionClass, DeltaCI]:
-    """Bootstrap CI on the corrected within-world contrast ``(ΔC, ΔU)``.
+    eps: float,
+) -> list[dict[PropositionClass, float]]:
+    """Shared bootstrap core: per draw, the corrected paired contrast ``{class: Δ or NaN}``.
 
-    Per draw: resample the per-(arm, class) falseness labels with replacement; draw
-    sens/spec per class from Jeffreys Beta on the holdout confusion, **shared across arms
-    within the draw** (one extractor measures both arms). NaN draws (singular denominator
-    or an empty arm/class) are dropped; their fraction is surfaced.
+    Per draw: draw sens/spec per class from Jeffreys Beta on the holdout confusion (shared
+    across arms — one extractor measures both), then resample the per-(arm, class) labels.
+    The fixed RNG call order makes the marginal and joint summaries one coherent bootstrap;
+    a class is NaN for the draw when its denominator is singular or an arm/class is empty.
     """
-    classes = (PropositionClass.CHECKABLE, PropositionClass.UNCHECKABLE)
-    deltas: dict[PropositionClass, list[float]] = {cls: [] for cls in classes}
+    draws: list[dict[PropositionClass, float]] = []
     for draw in range(n_draws):
         rng = substream(seed, "bootstrap", draw)
         sens_spec: dict[PropositionClass, tuple[float, float]] = {}
-        for cls in classes:
+        for cls in _CLASSES:
             cell = quality.by_class[cls].cell
             sens = rng.betavariate(
                 cell.gold_false_pred_false + 0.5, cell.gold_false_pred_true + 0.5
@@ -255,7 +255,8 @@ def bootstrap_delta_ci(
                 cell.gold_true_pred_true + 0.5, cell.gold_true_pred_false + 0.5
             )
             sens_spec[cls] = (sens, spec)
-        for cls in classes:
+        per: dict[PropositionClass, float] = {}
+        for cls in _CLASSES:
             sens, spec = sens_spec[cls]
             corrected: dict[str, float] = {}
             ok = abs(sens - (1.0 - spec)) >= eps
@@ -271,20 +272,148 @@ def bootstrap_delta_ci(
                     ok = False
                     break
                 corrected[arm] = min(1.0, max(0.0, value))
-            deltas[cls].append(corrected["A1"] - corrected["A0"] if ok else math.nan)
+            per[cls] = (corrected["A1"] - corrected["A0"]) if ok else math.nan
+        draws.append(per)
+    return draws
 
-    result: dict[PropositionClass, DeltaCI] = {}
-    for cls in classes:
-        surviving = sorted(d for d in deltas[cls] if not math.isnan(d))
-        frac_unidentifiable = 1.0 - len(surviving) / n_draws if n_draws else 1.0
-        if not surviving or frac_unidentifiable > max_unidentifiable:
-            result[cls] = DeltaCI(math.nan, math.nan, math.nan, frac_unidentifiable, len(surviving))
+
+def _summarize(
+    values: Sequence[float], *, n_draws: int, alpha: float, max_unidentifiable: float
+) -> DeltaCI:
+    """Percentile CI over the identifiable draws; all-NaN when too many are unidentifiable."""
+    surviving = sorted(v for v in values if not math.isnan(v))
+    frac_unidentifiable = 1.0 - len(surviving) / n_draws if n_draws else 1.0
+    if not surviving or frac_unidentifiable > max_unidentifiable:
+        return DeltaCI(math.nan, math.nan, math.nan, frac_unidentifiable, len(surviving))
+    return DeltaCI(
+        median=_percentile(surviving, 0.5),
+        lo=_percentile(surviving, alpha / 2.0),
+        hi=_percentile(surviving, 1.0 - alpha / 2.0),
+        frac_unidentifiable=frac_unidentifiable,
+        n_effective=len(surviving),
+    )
+
+
+def bootstrap_delta_ci(
+    false_labels: Mapping[tuple[str, PropositionClass], Sequence[bool]],
+    quality: ExtractionQuality,
+    *,
+    n_draws: int = 10_000,
+    alpha: float = 0.05,
+    seed: int,
+    eps: float = _SINGULAR_EPS,
+    max_unidentifiable: float = _MAX_UNIDENTIFIABLE,
+) -> dict[PropositionClass, DeltaCI]:
+    """Bootstrap CI on the corrected within-world contrast ``(ΔC, ΔU)``, marginally per class.
+
+    NaN draws (singular denominator or an empty arm/class) are dropped; their fraction is
+    surfaced. The marginals here and the joint regime in :func:`joint_regime` are read off
+    the same paired bootstrap.
+    """
+    draws = _joint_draws(false_labels, quality, n_draws=n_draws, seed=seed, eps=eps)
+    return {
+        cls: _summarize(
+            [d[cls] for d in draws],
+            n_draws=n_draws,
+            alpha=alpha,
+            max_unidentifiable=max_unidentifiable,
+        )
+        for cls in _CLASSES
+    }
+
+
+_QUADRANTS = ("C-neg_U-pos", "C-neg_U-nonpos", "C-nonneg_U-pos", "C-nonneg_U-nonpos")
+
+
+@dataclass(frozen=True, slots=True)
+class RegimeVerdict:
+    """The primary estimand: the regime read off the joint ``(ΔC, ΔU)`` bootstrap.
+
+    ``regime`` is one of ``displacement`` (ΔC<0, ΔU>0), ``honesty`` (both fall),
+    ``suppression`` (ΔC<0, ΔU≈0), ``null`` (joint CI contains the origin), ``other``, or
+    ``unidentifiable``. ``displacement_upper_bound`` is the calibrated H4 bound — the largest
+    ΔU not ruled out at ``1 - alpha`` — reported even when the null lands.
+    """
+
+    regime: str
+    delta_c: DeltaCI
+    delta_u: DeltaCI
+    quadrant_probs: Mapping[str, float]
+    p_displacement: float
+    displacement_upper_bound: float
+    frac_unidentifiable: float
+    n_effective: int
+
+
+def _classify(dc: DeltaCI, du: DeltaCI) -> str:
+    if math.isnan(dc.median) or math.isnan(du.median):
+        return "unidentifiable"
+    c_neg = dc.hi < 0.0
+    c_zero = dc.lo <= 0.0 <= dc.hi
+    u_pos = du.lo > 0.0
+    u_neg = du.hi < 0.0
+    u_zero = du.lo <= 0.0 <= du.hi
+    if c_zero and u_zero:
+        return "null"
+    if c_neg and u_pos:
+        return "displacement"
+    if c_neg and u_neg:
+        return "honesty"
+    if c_neg and u_zero:
+        return "suppression"
+    return "other"
+
+
+def joint_regime(
+    false_labels: Mapping[tuple[str, PropositionClass], Sequence[bool]],
+    quality: ExtractionQuality,
+    *,
+    n_draws: int = 10_000,
+    alpha: float = 0.05,
+    seed: int,
+    eps: float = _SINGULAR_EPS,
+    max_unidentifiable: float = _MAX_UNIDENTIFIABLE,
+) -> RegimeVerdict:
+    """Classify the within-world regime from the joint ``(ΔC, ΔU)`` bootstrap.
+
+    The four pre-registered regimes are read off the joint distribution: displacement
+    (ΔC<0, ΔU>0), honesty (both fall), suppression (ΔC<0, ΔU≈0), and a publishable null
+    (joint CI contains the origin), for which a calibrated upper bound on the displacement
+    effect (the ``1 - alpha`` quantile of ΔU) is reported. The analytic SUR / mixed-effects
+    fit is the Phase-7 confirmatory model; this bootstrap is its offline audit oracle.
+    """
+    c, u = PropositionClass.CHECKABLE, PropositionClass.UNCHECKABLE
+    draws = _joint_draws(false_labels, quality, n_draws=n_draws, seed=seed, eps=eps)
+    dc = _summarize(
+        [d[c] for d in draws], n_draws=n_draws, alpha=alpha, max_unidentifiable=max_unidentifiable
+    )
+    du = _summarize(
+        [d[u] for d in draws], n_draws=n_draws, alpha=alpha, max_unidentifiable=max_unidentifiable
+    )
+    paired = [(d[c], d[u]) for d in draws if not math.isnan(d[c]) and not math.isnan(d[u])]
+    frac_unidentifiable = 1.0 - len(paired) / n_draws if n_draws else 1.0
+
+    counts = dict.fromkeys(_QUADRANTS, 0)
+    for vc, vu in paired:
+        if vc < 0.0 and vu > 0.0:
+            counts["C-neg_U-pos"] += 1
+        elif vc < 0.0:
+            counts["C-neg_U-nonpos"] += 1
+        elif vu > 0.0:
+            counts["C-nonneg_U-pos"] += 1
         else:
-            result[cls] = DeltaCI(
-                median=_percentile(surviving, 0.5),
-                lo=_percentile(surviving, alpha / 2.0),
-                hi=_percentile(surviving, 1.0 - alpha / 2.0),
-                frac_unidentifiable=frac_unidentifiable,
-                n_effective=len(surviving),
-            )
-    return result
+            counts["C-nonneg_U-nonpos"] += 1
+    total = len(paired)
+    quadrant_probs = {k: (counts[k] / total if total else math.nan) for k in _QUADRANTS}
+    u_sorted = sorted(vu for _, vu in paired)
+    regime = _classify(dc, du) if frac_unidentifiable <= max_unidentifiable else "unidentifiable"
+    return RegimeVerdict(
+        regime=regime,
+        delta_c=dc,
+        delta_u=du,
+        quadrant_probs=quadrant_probs,
+        p_displacement=quadrant_probs["C-neg_U-pos"],
+        displacement_upper_bound=_percentile(u_sorted, 1.0 - alpha) if u_sorted else math.nan,
+        frac_unidentifiable=frac_unidentifiable,
+        n_effective=total,
+    )
