@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "noisyjudge"
+version = "0.1.0"
+description = "Class-stratified, judge-error-corrected contrast estimation for noisy LLM-as-judge evaluations (pure stdlib)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+keywords = ["llm", "evaluation", "llm-as-judge", "measurement-error", "rogan-gladen", "bootstrap"]
+dependencies = []
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/noisyjudge"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+strict = true
+files = ["src", "tests"]
