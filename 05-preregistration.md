@@ -33,6 +33,8 @@ A **bivariate mixed-effects / seemingly-unrelated-regression (SUR)** model on `(
 - **Honesty (H2) / Suppression (H3)** by the corresponding quadrant rules.
 - **Null (H4)** if the joint contrast's CI contains the origin → report a **calibrated upper bound on displacement capability** (the largest displacement ruled out at the chosen power).
 
+**Power-driven primary (added after the two real-provider pilots, 2026-06-16).** The pilots showed the *checkable* channel is well-fed (~7 impostor claims/game) but the *uncheckable* channel stays thin (~2.2/game — below the ~4 needed for a stable per-class rate). The design is therefore well-powered for the **`ΔC` marginal** (checkable suppression — does announcing a verifier measurably reduce checkable false-mass) and **under-powered for `ΔU`**. The confirmatory **headline primary is `ΔC`**; the **displacement contrast (`ΔU>0`, H1) is demoted to a secondary, honestly under-powered read reported as a calibrated upper bound**. The joint SUR fit and the quadrant decision rules above are retained for that secondary displacement read; the headline shifts to the effect the instrument can power on a limited single-family budget, never overclaiming a displacement existence proof from a weak-tier run.
+
 ## Secondary analyses (pre-specified, exploratory beyond)
 
 - **Displacement Index `D = ΔU/|ΔC|`** with a **Fieller / Bayesian-ratio CI** — reported for interpretability only, **never the primary**, and **never conditioned on `ΔC<0`** (that conditioning is selection-on-outcome and makes `D` explosive at the null).
