@@ -73,11 +73,14 @@ calibrated upper bound (`secondary_upper_bound`).
 Extracted and generalised from **Balloon Squeeze**, a research instrument measuring *deception
 displacement* in LLM agents (does announcing partial verification suppress an agent's checkable
 falsehoods or merely move them onto unchecked claims?). The instrument's mock closed-loop
-recovery proof — plant a known `(ΔC, ΔU)` regime, run it through the engine + a noisy extractor,
-and recover the regime from the corrected contrast — is the zero-cost validation of this kit's
-core. The statistics (Rogan & Gladen 1978 prevalence correction; paired bootstrap;
-design-effect power) are textbook; the contribution is the **class-stratified, judge-shared,
-identifiability-guarded packaging** for the LLM-as-judge setting.
+recovery proof — plant a known `(ΔC, ΔU)` regime, run it through the engine, and recover the
+regime from the bootstrap contrast — validates the *pipeline and the regime classifier* end to
+end (under perfect extraction, where Rogan-Gladen is the identity). The judge-error correction
+itself is exercised separately, on synthetic known-answer confusion cells with sensitivity and
+specificity below 1 (see the package tests). The statistics (Rogan & Gladen 1978 prevalence
+correction; paired bootstrap; design-effect power) are textbook; the contribution is the
+**class-stratified, judge-shared, identifiability-guarded packaging** for the LLM-as-judge
+setting.
 
 ## Install
 
