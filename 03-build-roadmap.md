@@ -65,14 +65,14 @@ construction.
 - [x] `llm/openai_compatible.py`: real client (httpx); seed/temperature passthrough; wire format MockTransport-tested offline.
 - [x] `llm_extract_claims` behind the `extract_claims` seam (FakeLLMClient-tested, incl. malformed / off-menu / non-bool paths).
 
-**Phase 3b — holdout + measurement correction (next):**
-- [ ] Per-class **detection recall** + a falseness-label **sensitivity/specificity**, **class-stratified** (pooling is the silent invalidator).
-- [ ] **Rogan–Gladen** correction of C/U with a **bootstrap** CI on `(ΔC, ΔU)`.
-- [ ] **Abort rule:** cross-class recall gap > 0.10, or either class recall < 0.85.
-- [ ] Eval machinery on a **synthetic** labeled fixture (verifies the math). A **real human-labeled holdout** is a separate data-collection task — gated, marked by a skipped test; never fabricated.
-- [ ] **Identifiability guard (the key threat):** an announced verifier can make the impostor's text harder to extract, and that recall drop is mechanically indistinguishable from displacement. Measure **per-arm extraction recall** and treat arm-correlated extraction loss as a covariate, not as `(ΔC, ΔU)`.
+**Phase 3b — holdout + measurement correction (done, on synthetic fixtures):**
+- [x] Per-class **detection recall** + falseness-label **sensitivity/specificity**, **class-stratified** (pooling is the silent invalidator).
+- [x] **Rogan–Gladen** correction; **bootstrap** CI on `(ΔC, ΔU)` — Jeffreys-Beta sens/spec **shared within a draw across arms, resampled across draws**; NaN on the singularity (no clamp); unidentifiable fraction surfaced.
+- [x] **Abort rule:** cross-class recall gap > 0.10, or either class recall < 0.85.
+- [x] Eval machinery verified on a **synthetic known-answer fixture** (math only). The **real human-labeled holdout** is gated — a skipped test; never fabricated.
+- [x] **Identifiability guard — exposed as a DIAGNOSTIC** (`detection_recall_gap_by_arm`): an announced verifier can make the impostor's text harder to extract, and that recall drop is a *selection* mechanically identical to displacement that Rogan–Gladen cannot fix. 3b builds + tests the measurement and stamps every result `KNOWN_LIMITATION: arm-extraction-symmetry unverified offline`; the live gate/adjust fires in Phase 7 on real per-arm text.
 
-**DoD (GATE):** extractor accuracy measured, class-balanced within threshold, and the correction in place; live extraction and the real human-labeled holdout remain gated (key + data).
+**DoD (GATE):** extractor accuracy measured, class-balanced within threshold, the correction in place — verified offline on synthetic known answers. Live extraction + the real human-labeled holdout remain gated (key + data).
 
 ## Phase 4 — Estimator recovery on mock
 
