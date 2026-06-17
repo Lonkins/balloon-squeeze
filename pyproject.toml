@@ -7,6 +7,7 @@ name = "balloon-squeeze"
 version = "0.0.1"
 description = "A research instrument for replay-isolated causal estimates of deception displacement in LLM agents."
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.11"
 authors = [{ name = "Lonkins" }]
 keywords = ["llm", "ai-safety", "deception", "scalable-oversight", "multi-agent", "evaluation"]
@@ -15,6 +16,7 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Intended Audience :: Science/Research",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "License :: OSI Approved :: MIT License",
   "Private :: Do Not Upload",
 ]
 # The core (mock) path is intentionally dependency-free so it runs and tests offline.
