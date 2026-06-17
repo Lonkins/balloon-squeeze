@@ -1,5 +1,7 @@
 # noisyjudge
 
+![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg) ![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg) ![dependencies](https://img.shields.io/badge/dependencies-none-success.svg)
+
 Class-stratified, judge-error-corrected **contrast** estimation for noisy LLM-as-judge
 evaluations. Pure standard library — no dependencies, deterministic, ~400 lines.
 

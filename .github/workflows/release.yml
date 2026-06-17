@@ -1,0 +1,43 @@
+# Gated release scaffold for the standalone kits (noisyjudge, deconfound).
+#
+# This does NOT publish on its own. It fires only on a version tag like `noisyjudge-v0.1.0`
+# or `deconfound-v0.1.0`, and it succeeds only once a maintainer has configured a PyPI
+# Trusted Publisher for that package name on TestPyPI (OIDC — no API token is stored in the
+# repo). Both wheels are already proven to build and install clean from a non-editable wheel
+# into a fresh venv. To publish to real PyPI instead of TestPyPI, delete the `repository-url`
+# line. Publishing is an owner action, gated on settling the package name (the repo rename).
+
+name: Release to TestPyPI
+
+on:
+  push:
+    tags:
+      - "noisyjudge-v*"
+      - "deconfound-v*"
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write # OIDC trusted publishing; no API token stored in the repo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Resolve package from the tag (e.g. noisyjudge-v0.1.0 -> noisyjudge)
+        run: echo "PKG=${GITHUB_REF_NAME%%-v*}" >> "$GITHUB_ENV"
+      - name: Build wheel + sdist
+        working-directory: packages/${{ env.PKG }}
+        run: |
+          python -m pip install --upgrade build
+          python -m build
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: packages/${{ env.PKG }}/dist/
