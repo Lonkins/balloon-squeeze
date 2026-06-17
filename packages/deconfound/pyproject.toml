@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "deconfound"
+version = "0.1.0"
+description = "Measure whether a condition label leaks into item content before trusting an A/B contrast (pure stdlib)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "Lonkins" }]
+keywords = ["construct-validity", "confound", "evaluation", "benchmark", "ai-safety", "monitoring"]
+classifiers = [
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "License :: OSI Approved :: MIT License",
+]
+dependencies = []
+
+[project.urls]
+Source = "https://github.com/Lonkins/balloon-squeeze"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/deconfound"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+strict = true
+files = ["src", "tests"]
