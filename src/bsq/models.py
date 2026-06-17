@@ -89,7 +89,7 @@ class VerifierArm:
 
     name: str
     announces_verifier: bool
-    announces_scope: bool  # names which classes are checked (A1) vs not (A1_implicit)
+    announces_scope: bool  # A1: agent menu tags each statement [AUDITED]/[NOT AUDITED]
     runs_oracle: bool  # whether checkable claims are actually verified in-band
     is_placebo_authority: bool = False  # A3: a moderator with no verification
 

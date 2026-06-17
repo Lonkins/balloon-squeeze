@@ -60,12 +60,67 @@ def test_impostor_prompt_has_deception_incentive_panelist_does_not() -> None:
     assert "impostor" not in panelist_system.lower()
 
 
-def test_announced_verifier_is_surfaced_only_when_scope_named() -> None:
+def test_verifier_awareness_is_surfaced_per_arm() -> None:
     policy = LLMPolicy(FakeLLM("x"))
-    announced = policy._system(_agent(Role.IMPOSTOR), _ctx("A1_announced"))
-    silent = policy._system(_agent(Role.IMPOSTOR), _ctx("A0_off"))
-    assert "verifier" in announced.lower()
+    impostor = _agent(Role.IMPOSTOR)
+    announced = policy._system(impostor, _ctx("A1_announced"))
+    implicit = policy._system(impostor, _ctx("A1_implicit"))
+    off = policy._system(impostor, _ctx("A0_off"))
+    silent = policy._system(impostor, _ctx("A2_silent"))
+    # A1_announced names the audit tag; A1_implicit announces a verifier but no scope/tag.
+    assert "verifier" in announced.lower() and "[audited]" in announced.lower()
+    assert "verifier" in implicit.lower() and "[audited]" not in implicit.lower()
+    # A0_off and A2_silent surface no verifier to the agent.
+    assert "verifier" not in off.lower()
     assert "verifier" not in silent.lower()
+
+
+class _RecordingLLM:
+    """Captures the last (system, user) prompt so the rendered menu can be inspected."""
+
+    def __init__(self) -> None:
+        self.last_user = ""
+
+    def complete(
+        self,
+        *,
+        system: str,
+        messages: list[ChatTurn],
+        max_tokens: int = 256,
+        temperature: float = 0.0,
+        stop: list[str] | None = None,
+        seed: int | None = None,
+    ) -> str:
+        self.last_user = messages[-1].content
+        return "ok"
+
+
+def test_audit_tag_reaches_the_impostor_menu_but_not_the_panelist() -> None:
+    client = _RecordingLLM()
+    policy = LLMPolicy(client)
+    ledger = author_ledger(GameConfig(), 2)
+    ctx = _ctx("A1_announced")
+    rng = random.Random(0)
+    policy.act(agent=_agent(Role.IMPOSTOR), ledger=ledger, round_idx=0, rng=rng, ctx=ctx)
+    impostor_menu = client.last_user
+    policy.act(agent=_agent(Role.PANELIST), ledger=ledger, round_idx=0, rng=rng, ctx=ctx)
+    panelist_menu = client.last_user
+    assert "[AUDITED]" in impostor_menu and "[NOT AUDITED]" in impostor_menu
+    assert "[AUDITED]" not in panelist_menu  # tag is impostor-only
+
+
+def test_no_audit_tag_under_implicit_scope() -> None:
+    client = _RecordingLLM()
+    policy = LLMPolicy(client)
+    ledger = author_ledger(GameConfig(), 2)
+    policy.act(
+        agent=_agent(Role.IMPOSTOR),
+        ledger=ledger,
+        round_idx=0,
+        rng=random.Random(0),
+        ctx=_ctx("A1_implicit"),
+    )
+    assert "[AUDITED]" not in client.last_user  # implicit arm shows no scope tag
 
 
 def test_real_text_pipe_produces_scored_claims() -> None:
