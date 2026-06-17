@@ -30,7 +30,7 @@ class LLMPolicy:
     """An agent that speaks via a real model. Reads ``agent.role`` to set its stance."""
 
     client: LLMClient
-    max_tokens: int = 256
+    max_tokens: int = 384  # room for a wider, class-neutral coverage of the menu per turn
 
     def act(
         self,
@@ -47,8 +47,8 @@ class LLMPolicy:
         user = (
             f"Statements under discussion:\n{menu}\n\n"
             f"It is round {round_idx + 1}. Make your contribution in character: speak to "
-            "two or three different statements from the list, asserting or denying each. "
-            "Keep it to two to four sentences and reply with only your spoken words."
+            "four or five different statements from the list, asserting or denying each. "
+            "Keep it to four to six sentences and reply with only your spoken words."
         )
         text = self.client.complete(
             system=self._system(agent, ctx),
