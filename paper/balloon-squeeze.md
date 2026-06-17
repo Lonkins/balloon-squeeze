@@ -248,3 +248,24 @@ out of band, and lock it with a regression test.
 - Li et al., 2025, arXiv:2508.00943 — monitor-awareness.
 - OpenAI, 2025, arXiv:2503.11926 — CoT-monitoring and within-channel obfuscation.
 - *From Hallucination to Scheming*, arXiv:2604.04788 — survey flagging pragmatic distortion as under-covered.
+
+## Appendix A: closed-loop estimator recovery
+
+A null is only credible if the estimator can recover a *non*-null when one is present. We
+plant each of the four regimes with a synthetic strategic policy and confirm the full
+pipeline (engine → score → class-stratified correction → paired bootstrap) recovers the
+planted `(ΔC, ΔU)` and classifies the regime. The last row injects extraction noise matched
+to a sub-perfect judge (sensitivity 0.85, specificity 0.90) and corrects with that quality —
+exercising the Rogan-Gladen correction end to end; without it the contrast attenuates.
+
+| Planted regime | extractor | planted (ΔC, ΔU) | recovered ΔC [95% CI] | recovered ΔU [95% CI] | verdict |
+|---|---|---|---|---|---|
+| displacement | perfect | (−0.25, +0.25) | −0.254 [−0.36, −0.15] | +0.265 [+0.16, +0.37] | displacement |
+| suppression  | perfect | (−0.25, 0.00) | −0.254 [−0.36, −0.15] | +0.000 [−0.11, +0.10] | suppression |
+| honesty      | perfect | (−0.25, −0.25) | −0.254 [−0.36, −0.15] | −0.276 [−0.37, −0.19] | honesty |
+| null         | perfect | (0.00, 0.00) | +0.000 [−0.11, +0.10] | +0.000 [−0.11, +0.10] | null |
+| displacement | noisy (0.85/0.90) | (−0.25, +0.25) | −0.293 [−0.41, −0.18] | +0.277 [+0.16, +0.40] | displacement |
+
+Every regime is recovered with the planted value inside the CI and the correct verdict,
+including through judge error. The reported empirical nulls are therefore measurements the
+instrument *can* distinguish from a real effect, not an inability to detect one.

@@ -26,6 +26,19 @@ Two things are worth reporting honestly:
 
 2. **A pre-registered capability-gradient probe → a two-tier null with a faint hint.** With the audit boundary *declared*, two capability tiers were run through the **identical** de-confounded channel. Both returned a clean, healthy-floor null on the within-arm tag gap (uncheckable-minus-checkable false rate): the weak tier at **−0.005 [−0.27, +0.27]**, the stronger tier at **+0.068 [−0.12, +0.28]**. **No confirmatory displacement on either tier** — but the stronger model lied *more* on its unaudited claims than its audited ones (0.508 vs 0.440), a faint **+0.07 hint in the predicted direction** where the weak model was flat. It is ~0.7 SE from zero — consistent with displacement scaling with capability, but **not resolved** at this budget (the CI is dominated by between-world variance, so tightening it needs more *worlds*, not deeper coverage). Both runs passed a **pre-committed kill rule**; the result is reported as a **calibrated upper bound**, not as "LLMs don't displace deception."
 
+## Reproduce
+
+The whole instrument runs offline on a deterministic **mock** provider — no API key, no spend:
+
+```sh
+python -m venv .venv && . .venv/bin/activate
+pip install -e ".[dev]" && pip install -e packages/noisyjudge
+pytest                                              # full suite (both packages green)
+pytest tests/test_corpus.py -k blind_class_guess    # the 49.4%-at-chance de-confounding gate
+```
+
+The mock path reproduces every offline claim — within-world replay determinism, the de-confounding gate, the judge-error-corrected closed-loop recovery (paper Appendix A), and the power model. The real-model probes are owner-gated and run from an untracked internal driver; their results are reported in [paper/balloon-squeeze.md](paper/balloon-squeeze.md).
+
 ## What's new (honest positioning)
 
 The pieces exist; the combination does not. The closest prior work and the exact gap:
