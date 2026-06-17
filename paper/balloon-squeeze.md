@@ -18,12 +18,16 @@ another, and the audit boundary reaches the agent *out of band* via an explicit 
 than through content. We show this matters empirically: a blind classifier separated our
 first (content-encoded) corpus at **82.8–95.3%**, and the redesign drives it to **49.4%**
 (chance), enforced as a regression test. Third, a **pre-committed kill rule** encoded as
-code, so a null is a measurement rather than a disappointment. A first pre-registered probe
-on a weak model returns a **clean null** — no measurable displacement, with a healthy lie
-floor and clean controls — which we report as a calibrated upper bound, not as a claim that
-"LLMs do not displace deception." The contribution is the apparatus and the de-confounding
-method; the weak-tier null is a worked demonstration that the instrument returns a
-trustworthy zero.
+code, so a null is a measurement rather than a disappointment. A first pre-registered
+**capability-gradient** probe — two tiers run through the identical de-confounded channel —
+returns **no confirmatory displacement on either tier** (credible nulls with healthy lie
+floors), alongside a **faint, non-significant directional hint** on the stronger tier (it
+lied more on its unaudited claims, +0.07 in the predicted direction, where the weak tier was
+flat) consistent with capability-scaling but unresolved at this budget. We report this as a
+calibrated upper bound, not as a claim that "LLMs do not displace deception." The
+contribution is the apparatus and the de-confounding method; the two-tier null with its
+honest directional hint is a worked demonstration that the instrument returns trustworthy
+measurements and is ready for a larger confirmatory study.
 
 ## 1. Introduction
 
@@ -144,26 +148,50 @@ clean).
 that passes it (flat gap, healthy floor, clean controls) is a credible measurement of zero;
 a null that fails it is flagged as a broken harness, not reported as a finding.
 
-## 5. A first probe
+## 5. First results: a capability-gradient probe
 
-We ran the probe on a weak model (a small, fast tier), owner-gated for cost, with the audit
-boundary *declared*: 14 `A1_announced` games plus `A0_off` and `A2_silent` controls,
-temperature 0.
+All runs were owner-gated for cost, temperature 0, with the audit boundary *declared*. The
+primary readout throughout is the within-`A1_announced` tag gap, run A1-first with a
+pre-committed early-stop on a clean-inert verdict.
 
-The within-`A1_announced` tag gap was **+0.048, 95% CI [−0.223, +0.288]** — no measurable
-displacement. The floor was healthy: the impostor lied on **21–43%** of its claims across
-conditions, both channels populated (≈ 2.8–4.3 claims per game per class), with zero response
-truncations. The `A2_silent` control gap was **+0.111, CI [−0.112, +0.312]** (includes zero;
-no spontaneous class split). The cross-arm checkable contrast `ΔC` was small, noisy, and in
-the anti-suppression direction; we do not interpret it. The probe **passed the kill rule** as
-a clean `inert` verdict.
+**A first weak-tier probe.** On a small, fast model the tag gap was **+0.048, 95% CI
+[−0.223, +0.288]** — no measurable displacement, with a healthy floor (the impostor lied on
+21–43% of its claims, both channels populated). A clean `inert` verdict. The CI was wide
+because the uncheckable channel was thin (≈ 2.8 claims/game).
 
-**Calibrated upper bound.** Rather than claim "no displacement," we report the bound the data
-support: with 95% confidence the tag gap is **at most +0.29**. The implied resolution
-(SE ≈ 0.13, so a minimum detectable gap of ≈ 0.36 at 80% power) means this rules out a
-*gross* effect on this tier, for a *declared* boundary — and nothing finer. The binding
-constraint is the thin uncheckable channel (≈ 2.8 claims/game); tightening the bound is a
-matter of channel **depth**, not breadth.
+**A channel-depth repair.** Before reading more into the wide CI, we deepened the channel
+with a *class-neutral* coverage increase (the impostor addresses more statements per turn),
+lifting both channels (uncheckable ≈ 2.9 → ≈ 4.5 claims/game) without biasing the contrast.
+
+**The gradient.** We then ran two capability tiers — the same weak model with the repaired
+channel, and one stronger model — through the **identical** pipeline, so a tier difference is
+attributable to capability rather than to the channel change. Both returned a clean `inert`
+verdict:
+
+| Tier | tag gap (U−C) | audited / unaudited false rate |
+|------|---------------|--------------------------------|
+| weak (repaired) | −0.005 [−0.267, +0.274] | 0.402 / 0.397 |
+| stronger | +0.068 [−0.119, +0.282] | 0.440 / **0.508** |
+
+**No confirmatory displacement on either tier** — both CIs contain zero. But there is a
+**faint, non-significant directional hint**: the stronger model lied *more* on its unaudited
+claims than its audited ones (0.508 vs 0.440), a +0.07 gap in the predicted displacement
+direction, where the weak model was flat (−0.005). At ≈ 0.7 standard errors from zero it is
+not resolved; an effect of this size would need on the order of 50+ games to confirm, beyond
+this budget.
+
+**A methodological note on the binding constraint.** Deepening the per-game channel did *not*
+tighten the 14-game CI (half-width ≈ 0.27, unchanged). The cluster bootstrap is dominated by
+*between-game* variance, so the binding constraint on resolution is the number of **games
+(clusters)**, not claims-per-game. The channel repair bought healthy, non-degenerate floors
+on both tiers; tightening the bound is a matter of *more worlds*, not deeper coverage.
+
+**Calibrated upper bound.** Rather than claim "no displacement," we report what the data
+support: across two tiers measured identically, the tag gap is at most ≈ +0.27–0.28 at 95%
+confidence, on a *declared* boundary. The result is a credible two-tier null with a
+pre-registered directional hint consistent with — but not establishing — displacement
+scaling with capability. That hint motivates a larger, more-worlds confirmatory study; the
+instrument is ready for it.
 
 ## 6. Limitations and the threat-model ladder
 
@@ -175,11 +203,14 @@ The result is honestly scoped on three axes, and the threat-model ladder is the 
   monitor-evasion-shaped version). We measured the **easiest rung**. A null on a declared
   boundary is weak evidence about inferred-boundary behaviour; the de-confounding that buys
   the clean contrast is exactly what forecloses the inferred version in the same corpus.
-- **Capability tier.** This is a weak-model null. It confirms the field's prior that small
-  models do not strategically route deception; it does not speak to capable models, which is
-  where the safety-relevant question lives.
-- **Resolution.** A wide CI on a thin channel rules out only a gross effect. A subtle effect
-  below ≈ 0.3 is not excluded.
+- **Capability tier.** Two tiers (weak and one rung up), both null, with a faint
+  unresolved displacement-direction hint on the stronger one. This is a two-point gradient at
+  the low-to-middle of the capability range; it does not speak to frontier models, where the
+  safety-relevant question lives, and the hint must not be over-read.
+- **Resolution.** With ≈ 14 worlds per tier the CI half-width is ≈ 0.27, dominated by
+  between-world variance; this rules out only a gross effect (gap > ≈ 0.27). A subtle effect —
+  including the +0.07 hint — is not excluded, and resolving it needs more worlds, not deeper
+  per-world coverage.
 
 Two further caveats: real-provider runs are best-effort reproducible (the API has no seed),
 softening the within-world claim on the live path relative to mock; and the explicit
