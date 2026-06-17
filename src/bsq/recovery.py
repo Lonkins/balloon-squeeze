@@ -1,15 +1,23 @@
 """Closed-loop estimator recovery.
 
 Plant a known displacement with the strategic displacer, run the full instrument
-(engine -> score -> bootstrap), and confirm the recovered ``(ΔC, ΔU)`` matches the
-plant. On the mock path extraction is perfect, so the supplied ExtractionQuality is
-perfect and Rogan-Gladen is the identity — this validates the *plumbing and the plant*
-end to end (the correction itself is covered in Phase 3b).
+(engine -> score -> bootstrap), and confirm the recovered ``(ΔC, ΔU)`` matches the plant.
+
+Two closed loops:
+
+- :func:`recover` runs under **perfect extraction**, so the supplied ExtractionQuality is
+  perfect and Rogan-Gladen is the identity — this validates the *plumbing and the plant*
+  end to end.
+- :func:`recover_noisy` injects extraction noise that matches a **sub-perfect** quality
+  (sensitivity/specificity below 1), then corrects with that same quality — so the
+  Rogan-Gladen correction is actually exercised end to end and must recover the plant from
+  the corrupted labels. Without the correction the recovered contrast would be attenuated.
 """
 
 from __future__ import annotations
 
 import math
+import random
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from enum import StrEnum
@@ -24,6 +32,7 @@ from bsq.eval import (
     bootstrap_delta_ci,
 )
 from bsq.models import GameConfig, PropositionClass
+from bsq.rng import substream
 
 # Bootstrap arm keys -> the engine arm names they are produced from.
 _ARM_NAME = {"A0": "A0_off", "A1": "A1_announced"}
@@ -118,5 +127,47 @@ def recover(
         false_labels[("A1", cls)] = a1[cls]
     deltas = bootstrap_delta_ci(
         false_labels, _perfect_quality(), n_draws=n_draws, alpha=alpha, seed=base_seed
+    )
+    return RecoveryResult(deltas=deltas, regime=_classify(deltas))
+
+
+def _corrupt(labels: list[bool], sens: float, spec: float, rng: random.Random) -> list[bool]:
+    """Inject extraction noise: a gold-false label survives as false w.p. ``sens``; a
+    gold-true label is flipped to false w.p. ``1 - spec``. Exactly one draw per label."""
+    return [(rng.random() < sens) if gold else (rng.random() >= spec) for gold in labels]
+
+
+def recover_noisy(
+    cfg: GameConfig,
+    displacer: Policy,
+    quality: ExtractionQuality,
+    *,
+    correct_quality: ExtractionQuality | None = None,
+    n_games: int = 30,
+    base_seed: int = 0,
+    alpha: float = 0.05,
+    n_draws: int = 1000,
+) -> RecoveryResult:
+    """Recover the planted regime through a genuinely noisy extractor.
+
+    Runs both arms, corrupts the per-class labels to match ``quality`` (sens/spec < 1),
+    then corrects with ``correct_quality`` (default: ``quality`` itself). Correcting with
+    the matching quality exercises Rogan-Gladen end to end and must recover the plant;
+    passing a perfect ``correct_quality`` leaves the contrast attenuated, which is how the
+    correction's necessity is demonstrated. Deterministic: the corruption draws from a
+    dedicated ``noisy_extraction`` substream of ``base_seed``.
+    """
+    a0 = _run_arm(cfg, _ARM_NAME["A0"], displacer, n_games=n_games, base_seed=base_seed)
+    a1 = _run_arm(cfg, _ARM_NAME["A1"], displacer, n_games=n_games, base_seed=base_seed)
+    rng = substream(base_seed, "noisy_extraction")
+    false_labels: dict[tuple[str, PropositionClass], list[bool]] = {}
+    for tag, arm_labels in (("A0", a0), ("A1", a1)):
+        for cls in PropositionClass:
+            q = quality.by_class[cls]
+            false_labels[(tag, cls)] = _corrupt(
+                arm_labels[cls], q.falseness_sens, q.falseness_spec, rng
+            )
+    deltas = bootstrap_delta_ci(
+        false_labels, correct_quality or quality, n_draws=n_draws, alpha=alpha, seed=base_seed
     )
     return RecoveryResult(deltas=deltas, regime=_classify(deltas))
