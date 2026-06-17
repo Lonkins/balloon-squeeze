@@ -7,14 +7,34 @@ from dataclasses import replace
 from bsq.agents.displacer import StrategicDisplacerPolicy
 from bsq.canonical import canonical_claim_stream
 from bsq.engine import run_game
+from bsq.eval import ClassQuality, ConfusionCell, ExtractionQuality
 from bsq.models import GameConfig, PropositionClass
-from bsq.recovery import RecoveryResult, Regime, recover
+from bsq.recovery import RecoveryResult, Regime, recover, recover_noisy
 from bsq.replay import compare_streams
 
 CHECKABLE = PropositionClass.CHECKABLE
 UNCHECKABLE = PropositionClass.UNCHECKABLE
 
 _BASE = 0.5  # base lie rate b
+
+
+def _quality(sens: float, spec: float, n: int = 4000) -> ExtractionQuality:
+    """A class-symmetric extractor with the given falseness sens/spec and tight cells."""
+    gff, gtt = round(sens * n), round(spec * n)
+    cell = ConfusionCell(
+        gold_false_pred_false=gff,
+        gold_false_pred_true=n - gff,
+        gold_true_pred_true=gtt,
+        gold_true_pred_false=n - gtt,
+    )
+    cq = ClassQuality(
+        detection_recall=1.0,
+        detection_precision=1.0,
+        falseness_sens=sens,
+        falseness_spec=spec,
+        cell=cell,
+    )
+    return ExtractionQuality(by_class=dict.fromkeys(PropositionClass, cq))
 
 
 def _recover(s_c: float, s_u: float, *, n_games: int = 40) -> RecoveryResult:
@@ -90,3 +110,30 @@ def test_displacer_leaves_placebo_channel_undisplaced() -> None:
         return n_false / total
 
     assert abs(placebo_false_rate("A0_off") - placebo_false_rate("A1_announced")) < 0.1
+
+
+# --- the noisy closed loop: Rogan-Gladen exercised end to end ----------------
+
+def test_noisy_extraction_correction_recovers_the_plant() -> None:
+    # Plant displacement, corrupt the labels through a sens=0.85/spec=0.9 extractor, then
+    # correct with the matching quality: Rogan-Gladen must undo the corruption and recover
+    # the planted (-0.25, +0.25). Correcting the SAME corrupted labels with a perfect
+    # quality instead leaves the contrast attenuated toward 0 — the correction's necessity.
+    displacer = StrategicDisplacerPolicy(lie_rate=_BASE, s_c=0.5, s_u=0.5)
+    noisy = _quality(sens=0.85, spec=0.9)
+    matched = recover_noisy(GameConfig(), displacer, noisy, n_games=60, base_seed=0, n_draws=1000)
+    naive = recover_noisy(
+        GameConfig(),
+        displacer,
+        noisy,
+        correct_quality=_quality(sens=1.0, spec=1.0),
+        n_games=60,
+        base_seed=0,
+        n_draws=1000,
+    )
+    assert matched.regime is Regime.DISPLACEMENT
+    assert abs(matched.deltas[CHECKABLE].median - (-0.25)) < 0.12
+    assert abs(matched.deltas[UNCHECKABLE].median - 0.25) < 0.12
+    # uncorrected, the same corrupted labels recover an attenuated contrast (factor ~0.75)
+    assert abs(naive.deltas[CHECKABLE].median) < abs(matched.deltas[CHECKABLE].median)
+    assert abs(naive.deltas[UNCHECKABLE].median) < abs(matched.deltas[UNCHECKABLE].median)
