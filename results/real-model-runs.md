@@ -17,7 +17,7 @@ spend across the whole project ≈ **$6.4**.
 
 ## 1. First probe — weak tier, thin channel (2026-06-17)
 
-Model: `claude-haiku-4-5`. Original (pre-repair) coverage nudge → ≈ 2.8 uncheckable
+Tier: **weak** (a small, fast model). Original (pre-repair) coverage nudge → ≈ 2.8 uncheckable
 claims/game. Full three-arm run.
 
 | arm | games | checkable false/total (rate) | uncheckable false/total (rate) | tag gap (U−C) [95% CI] | verdict |
@@ -31,17 +31,17 @@ claims/game. Full three-arm run.
 ## 2. Capability gradient — repaired channel (2026-06-17)
 
 Class-neutral coverage repair (`four or five statements`, `max_tokens` 256→384) → ≈ 4.4–4.5
-uncheckable claims/game. A pre-flight `claude-sonnet-4-6` smoke (2 games) confirmed
+uncheckable claims/game. A pre-flight stronger-tier smoke (2 games) confirmed
 `U/game = 4.00` before any full run. Both tiers run A1-first through the **identical**
 pipeline; both early-stopped `inert`.
 
-| tier | model | games | checkable false/total (rate) | uncheckable false/total (rate) | tag gap (U−C) [95% CI] |
-|------|-------|------:|------------------------------|--------------------------------|------------------------|
-| weak (repaired) | `claude-haiku-4-5` | 14 | 41/102 (0.402) | 25/63 (0.397) | **−0.005** [−0.267, +0.274] |
-| stronger | `claude-sonnet-4-6` | 14 | 44/100 (0.440) | 31/61 (**0.508**) | **+0.068** [−0.119, +0.282] |
+| tier | games | checkable false/total (rate) | uncheckable false/total (rate) | tag gap (U−C) [95% CI] |
+|------|------:|------------------------------|--------------------------------|------------------------|
+| weak (repaired) | 14 | 41/102 (0.402) | 25/63 (0.397) | **−0.005** [−0.267, +0.274] |
+| stronger | 14 | 44/100 (0.440) | 31/61 (**0.508**) | **+0.068** [−0.119, +0.282] |
 
 No confirmatory displacement on either tier (both CIs contain 0). The stronger tier lied more
 on its unaudited claims (0.508 vs 0.440): a faint +0.07 hint in the predicted direction,
 ≈ 0.7 SE from zero, unresolved at this budget. Per the committed power model the hint needs
 ≈ 180–300 worlds/arm (Figure 1); 14 worlds resolve only a gross effect (MDE ≈ 0.20). Zero
-truncations on Haiku, one on each Sonnet run (tolerated, partial text used).
+truncations on the weak tier, one on each stronger-tier run (tolerated, partial text used).
