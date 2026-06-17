@@ -177,14 +177,28 @@ verdict:
 **faint, non-significant directional hint**: the stronger model lied *more* on its unaudited
 claims than its audited ones (0.508 vs 0.440), a +0.07 gap in the predicted displacement
 direction, where the weak model was flat (−0.005). At ≈ 0.7 standard errors from zero it is
-not resolved; an effect of this size would need on the order of 50+ games to confirm, beyond
-this budget.
+not resolved. By the project's own committed power model, resolving an effect this small
+(MDE ≈ 0.07) would need on the order of **180–300 worlds per arm** — depending on the
+between-world ICC — roughly an order of magnitude beyond the 14-world budget here (Figure 1).
+The achieved budget resolves only a *gross* effect (MDE ≈ 0.20, ≈ 22–37 worlds); the +0.07
+hint sits well inside the unresolved band.
 
 **A methodological note on the binding constraint.** Deepening the per-game channel did *not*
 tighten the 14-game CI (half-width ≈ 0.27, unchanged). The cluster bootstrap is dominated by
-*between-game* variance, so the binding constraint on resolution is the number of **games
+*between-world* variance, so the binding constraint on resolution is the number of **worlds
 (clusters)**, not claims-per-game. The channel repair bought healthy, non-degenerate floors
 on both tiers; tightening the bound is a matter of *more worlds*, not deeper coverage.
+
+![Required worlds per arm vs. the minimum detectable tag gap, computed by the committed power
+model at two between-world ICC assumptions; the achieved 14-world budget and the +0.07 hint
+are marked.](figures/mde-vs-games.svg)
+
+**Figure 1.** *Required worlds per arm to detect a tag gap of a given size, from the
+instrument's own `power.required_games` estimator. The +0.07 directional hint needs ≈ 180–300
+worlds per arm; the 14-world budget resolves only a gross effect (MDE ≈ 0.20). This is why the
+hint is unresolvable at this budget and why resolution requires more worlds, not deeper
+per-world coverage — generated and regression-tested so the figure cannot drift from the
+estimator.*
 
 **Calibrated upper bound.** Rather than claim "no displacement," we report what the data
 support: across two tiers measured identically, the tag gap is at most ≈ +0.27–0.28 at 95%

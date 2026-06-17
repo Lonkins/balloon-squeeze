@@ -1,0 +1,50 @@
+<svg viewBox="0 0 660 420" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif" font-size="13">
+<rect x="0" y="0" width="660" height="420" fill="white"/>
+<line x1="78" y1="364" x2="632" y2="364" stroke="#444"/>
+<line x1="78" y1="30" x2="78" y2="364" stroke="#444"/>
+<line x1="73" y1="364.0" x2="78" y2="364.0" stroke="#444"/>
+<text x="69" y="368.0" text-anchor="end" fill="#444">0</text>
+<line x1="78" y1="364.0" x2="632" y2="364.0" stroke="#eee"/>
+<line x1="73" y1="311.8" x2="78" y2="311.8" stroke="#444"/>
+<text x="69" y="315.8" text-anchor="end" fill="#444">50</text>
+<line x1="78" y1="311.8" x2="632" y2="311.8" stroke="#eee"/>
+<line x1="73" y1="259.6" x2="78" y2="259.6" stroke="#444"/>
+<text x="69" y="263.6" text-anchor="end" fill="#444">100</text>
+<line x1="78" y1="259.6" x2="632" y2="259.6" stroke="#eee"/>
+<line x1="73" y1="207.4" x2="78" y2="207.4" stroke="#444"/>
+<text x="69" y="211.4" text-anchor="end" fill="#444">150</text>
+<line x1="78" y1="207.4" x2="632" y2="207.4" stroke="#eee"/>
+<line x1="73" y1="155.2" x2="78" y2="155.2" stroke="#444"/>
+<text x="69" y="159.2" text-anchor="end" fill="#444">200</text>
+<line x1="78" y1="155.2" x2="632" y2="155.2" stroke="#eee"/>
+<line x1="73" y1="103.1" x2="78" y2="103.1" stroke="#444"/>
+<text x="69" y="107.1" text-anchor="end" fill="#444">250</text>
+<line x1="78" y1="103.1" x2="632" y2="103.1" stroke="#eee"/>
+<line x1="73" y1="50.9" x2="78" y2="50.9" stroke="#444"/>
+<text x="69" y="54.9" text-anchor="end" fill="#444">300</text>
+<line x1="78" y1="50.9" x2="632" y2="50.9" stroke="#eee"/>
+<line x1="78.0" y1="364" x2="78.0" y2="369" stroke="#444"/>
+<text x="78.0" y="384" text-anchor="middle" fill="#444">0.07</text>
+<line x1="150.3" y1="364" x2="150.3" y2="369" stroke="#444"/>
+<text x="150.3" y="384" text-anchor="middle" fill="#444">0.10</text>
+<line x1="270.7" y1="364" x2="270.7" y2="369" stroke="#444"/>
+<text x="270.7" y="384" text-anchor="middle" fill="#444">0.15</text>
+<line x1="391.1" y1="364" x2="391.1" y2="369" stroke="#444"/>
+<text x="391.1" y="384" text-anchor="middle" fill="#444">0.20</text>
+<line x1="511.6" y1="364" x2="511.6" y2="369" stroke="#444"/>
+<text x="511.6" y="384" text-anchor="middle" fill="#444">0.25</text>
+<line x1="632.0" y1="364" x2="632.0" y2="369" stroke="#444"/>
+<text x="632.0" y="384" text-anchor="middle" fill="#444">0.30</text>
+<line x1="78" y1="349.4" x2="632" y2="349.4" stroke="#57606a" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="628" y="343.4" text-anchor="end" fill="#57606a">achieved budget: 14 worlds/arm</text>
+<polyline points="78.0,177.2 102.1,221.0 126.2,251.3 150.3,272.1 174.3,287.8 198.4,300.3 222.5,309.7 246.6,317.0 270.7,323.3 294.8,327.5 318.9,331.6 343.0,335.8 367.0,337.9 391.1,341.0 415.2,343.1 439.3,344.2 463.4,346.3 487.5,347.3 511.6,349.4 535.7,350.4 559.7,351.5 583.8,351.5 607.9,352.5 632.0,353.6" fill="none" stroke="#1f6feb" stroke-width="2.5"/>
+<polyline points="78.0,55.1 102.1,127.1 126.2,177.2 150.3,212.7 174.3,238.8 198.4,258.6 222.5,274.2 246.6,286.8 270.7,296.2 294.8,304.5 318.9,310.8 343.0,317.0 367.0,321.2 391.1,325.4 415.2,329.6 439.3,332.7 463.4,334.8 487.5,336.9 511.6,338.9 535.7,341.0 559.7,343.1 583.8,344.2 607.9,345.2 632.0,346.3" fill="none" stroke="#cf222e" stroke-width="2.5"/>
+<circle cx="78.0" cy="55.1" r="4" fill="#cf222e"/>
+<text x="86.0" y="59.1" fill="#cf222e">+0.07 hint ≈ 296 worlds/arm</text>
+<rect x="482" y="36" width="14" height="3" fill="#1f6feb"/>
+<text x="500" y="43" fill="#444">ICC = 0</text>
+<rect x="482" y="54" width="14" height="3" fill="#cf222e"/>
+<text x="500" y="61" fill="#444">ICC = 0.15</text>
+<text x="355" y="406" text-anchor="middle" fill="#222">minimum detectable tag gap (MDE)</text>
+<text x="18" y="197" text-anchor="middle" fill="#222" transform="rotate(-90 18 197)">required worlds per arm</text>
+</svg>
