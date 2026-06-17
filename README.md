@@ -2,7 +2,7 @@
 
 *Does telling an LLM agent that a verifier checks some of its claims make it honest — or does it just move the lies onto the claims that aren't checked?*
 
-**Status: Design phase — not yet built.** These docs are the spec a dedicated build thread should implement. (Working name "Balloon Squeeze"; the repository directory name is legacy and will be settled before any public release.)
+**Status: built, and run once.** The instrument is implemented and tested — the full pipeline runs offline on a deterministic mock provider, and a first **pre-registered probe** has been run on a real model. The headline contribution is the *method*, not that probe's result: a **replay-isolated within-world design**, a **de-confounding protocol** for the checkable/uncheckable boundary, and a **pre-committed kill rule** encoded as code. The first probe (a weak model) returned a **clean null**, reported honestly as a calibrated upper bound — see [Status & first result](#status--first-result). (Working name "Balloon Squeeze"; the repository directory name is legacy and will be settled before any public release.)
 
 ## What it is
 
@@ -16,6 +16,16 @@ The hypothesis being tested — the "balloon squeeze": **squeeze dishonesty out 
 
 The primary estimand is the **bivariate joint contrast `(ΔC, ΔU)`** — the within-world change in false-mass on checkable vs uncheckable claims under verifier-announced vs verifier-off. Four pre-registered regimes: **Honesty** (both fall), **Displacement** (checkable falls, uncheckable rises — the balloon squeeze), **Suppression** (both fall via hedging/silence), and a publishable **Null** (no effect → a calibrated upper bound on displacement *capability*).
 
+## Status & first result
+
+The instrument is built (`src/bsq/`, full test suite green on the mock provider) and a standalone measurement kit is extracted as its own package (`packages/noisyjudge/` — class-stratified Rogan-Gladen correction + paired bootstrap CI + power + an identifiability diagnostic, pure stdlib).
+
+Two things are worth reporting honestly:
+
+1. **A construct-validity repair.** The first corpus encoded checkability in the *content* (logged public events vs private-intention predicates), so a blind classifier separated the two classes at **82.8–95.3%** — "uncheckable" was collinear with "is-an-intention-claim", not with audit status. The fix (*Architecture A*) makes class **per-world metadata** over one surface-form-homogeneous pool — the same sentence is checkable in one world and uncheckable in another — and delivers the audit boundary **out of band** via an explicit `[AUDITED]/[NOT AUDITED]` tag. A blind classifier now sits at **49.4%** (chance), enforced as a regression test, not asserted in prose.
+
+2. **A first pre-registered probe → a clean null.** On a weak model, with the audit boundary *declared* to the agent, the within-arm tag gap (uncheckable-minus-checkable false rate) was **+0.05, 95% CI [−0.22, +0.29]** — no measurable displacement, with a healthy lie floor (the agent lied 21–43% across conditions) and clean controls, so the null is non-artifactual rather than a broken harness. It passed a **pre-committed kill rule** and is reported as a **calibrated upper bound** — this resolution rules out a *gross* effect, on this tier, for a *declared* (not inferred) boundary. It is **not** a finding that "LLMs don't displace deception."
+
 ## What's new (honest positioning)
 
 The pieces exist; the combination does not. The closest prior work and the exact gap:
@@ -26,7 +36,7 @@ The pieces exist; the combination does not. The closest prior work and the exact
 - [OpenAI CoT-monitoring (arXiv:2503.11926)](https://arxiv.org/abs/2503.11926) shows obfuscation emerges **within the same channel** under optimization pressure — channel-hiding, not migration of false *claims* across a verifiability boundary.
 - In humans, monitoring one dimension displaces lying onto unobserved dimensions ([Du & Yang, *J. Econ. & Mgmt. Strategy* 2025](https://onlinelibrary.wiley.com/doi/10.1111/jems.70014)) — theoretical grounding, but not LLM/agentic and not replay-isolated.
 
-**Our claim, and nothing more:** the first pre-registered, replay-isolated causal estimate that announcing a verifier **redistributes** rather than reduces LLM dishonesty, across a boundary where the engine holds truth on *both* sides.
+**Our claim, and nothing more:** a pre-registered, replay-isolated **instrument** for measuring whether announcing a verifier *redistributes* rather than reduces LLM dishonesty — across a boundary where the engine holds truth on *both* sides and the boundary is **de-confounded from claim content** — together with a first calibrated weak-tier measurement. The contribution is the apparatus, the de-confounding protocol, and the honest result; **not** a displacement existence proof, which a single weak-model probe cannot and does not support.
 
 ## The docs
 
@@ -38,4 +48,4 @@ The pieces exist; the combination does not. The closest prior work and the exact
 
 ## Honesty note
 
-This is a **solid, defensible study, not a seminal discovery** — three independent reviews confirmed the apparatus's affordances are now common in the multi-agent literature, so we compete on a precise, well-controlled question, not on a virgin sector. The *most-likely* result is modest (displacement that scales with model capability; small or null on weak models). That is fine: the null is pre-registered as a calibrated capability upper-bound, so the contribution is robust to outcome. We will not overclaim.
+This is a **solid, defensible instrument, not a seminal discovery** — independent reviews confirmed the apparatus's affordances are now common in the multi-agent literature, so it competes on a precise, well-controlled, *de-confounded* question, not on a virgin sector. The first real result is exactly the modest, pre-registered outcome anticipated: a null on a weak model, reported as a calibrated capability upper bound. That is by design — the contribution is robust to outcome because the null was pre-registered as publishable and the kill rule held. The value lives in the method (within-world replay + the 82.8% → 49.4% de-confounding repair + a kill rule that a clean null actually passed), not in the weak-tier number. We do not overclaim.
