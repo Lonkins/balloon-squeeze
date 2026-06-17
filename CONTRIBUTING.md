@@ -16,8 +16,8 @@ Verify the scaffold:
 bsq --version
 bsq selftest          # zero-setup determinism check on the mock provider
 pytest                # smoke tests
-ruff check .          # lint
-mypy                  # type-check (strict)
+ruff check src tests  # lint (matches CI)
+mypy src tests        # type-check, strict (matches CI)
 ```
 
 ## Branch & PR workflow (required)
@@ -57,4 +57,4 @@ confirmatory run, report the null, and cite the closest prior work accurately. S
 
 ## Housekeeping
 
-- A software license has not yet been chosen; pick one before any public release.
+- Licensed MIT — see [LICENSE](LICENSE). The standalone kits under `packages/` are MIT too; the instrument package is marked not-for-distribution.
