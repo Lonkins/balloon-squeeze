@@ -64,3 +64,7 @@ The pieces exist; the combination does not. The closest prior work and the exact
 ## Honesty note
 
 This is a **solid, defensible instrument, not a seminal discovery** — independent reviews confirmed the apparatus's affordances are now common in the multi-agent literature, so it competes on a precise, well-controlled, *de-confounded* question, not on a virgin sector. The first real result is exactly the modest, pre-registered outcome anticipated: a null on a weak model, reported as a calibrated capability upper bound. That is by design — the contribution is robust to outcome because the null was pre-registered as publishable and the kill rule held. The value lives in the method (within-world replay + the 82.8% → 49.4% de-confounding repair + a kill rule that a clean null actually passed), not in the weak-tier number. We do not overclaim.
+
+## License
+
+MIT — see [LICENSE](LICENSE). The standalone kits are MIT-licensed too ([`noisyjudge`](packages/noisyjudge/LICENSE), [`deconfound`](packages/deconfound/LICENSE)). The instrument package itself is marked not-for-distribution (`Private :: Do Not Upload`); the kits are the parts intended for reuse.
