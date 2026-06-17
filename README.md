@@ -18,7 +18,7 @@ The primary estimand is the **bivariate joint contrast `(ΔC, ΔU)`** — the wi
 
 ## Status & first result
 
-The instrument is built (`src/bsq/`, full test suite green on the mock provider) and a standalone measurement kit is extracted as its own package (`packages/noisyjudge/` — class-stratified Rogan-Gladen correction + paired bootstrap CI + power + an identifiability diagnostic, pure stdlib).
+The instrument is built (`src/bsq/`, full test suite green on the mock provider), and the two reusable methods are extracted as standalone, dependency-free packages: **[`noisyjudge`](packages/noisyjudge/)** (class-stratified Rogan-Gladen correction + paired bootstrap CI + power + an identifiability diagnostic — the *measurement-time* judge-error machinery) and **[`deconfound`](packages/deconfound/)** (a blind-classifier check that your condition label doesn't leak into item content — the *design-time* construct-validity gate, below).
 
 Two things are worth reporting honestly:
 

@@ -136,3 +136,8 @@ nobody checks whether a blind classifier can separate them. The recipe here gene
    path is blind to, not through the stimulus content.
 4. **Lock it with a regression test** — assert the blind-guess rate stays at chance, so the
    confound cannot creep back as the corpus grows.
+
+This recipe is packaged as a standalone, dependency-free tool: **[`deconfound`](packages/deconfound/)**.
+`pip install` it and call `separability_report(your_labelled_items)` to get a
+`confounded` / `at-chance` verdict on any benchmark's condition labels — step 1 of the recipe
+in one function call.
