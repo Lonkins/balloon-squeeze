@@ -10,9 +10,11 @@ sent as a cache-control block (harmless when the prefix is below the cache minim
 model name is never hard-coded — it comes from ``BSQ_MODEL`` (keep it the cheapest
 capable model for cost). A real SDK client refuses to construct without an explicit
 ``BSQ_API_KEY``, so an ambient ``ANTHROPIC_API_KEY`` in the shell can never be spent by
-accident. The Messages API has **no seed**, so ``seed`` is accepted and
-ignored. A truncated response (``stop_reason == "max_tokens"``) is raised rather than
-parsed — a half-written JSON body is the silent killer of the downstream claim counts.
+accident. The Messages API has **no seed**, so ``seed`` is accepted and ignored. A
+truncated response (``stop_reason == "max_tokens"``) returns its **partial** text and bumps
+a ``truncations`` counter rather than raising: a truncated policy utterance is still usable
+and a truncated extractor body is dropped to ``[]`` by the parser, so a single capped call
+must not abort a whole multi-call run. The counter lets a run report how many calls capped.
 """
 
 from __future__ import annotations
@@ -45,6 +47,12 @@ class AnthropicClient:
         self._cfg = cfg
         self._model = cfg.model
         self._client: Any = client if client is not None else _make_sdk_client(cfg)
+        self._truncations = 0
+
+    @property
+    def truncations(self) -> int:
+        """How many responses were capped at ``max_tokens`` (tolerated, partial returned)."""
+        return self._truncations
 
     def complete(
         self,
@@ -69,12 +77,18 @@ class AnthropicClient:
 
         response = self._client.messages.create(**request)
 
-        if getattr(response, "stop_reason", None) == "max_tokens":
-            raise ValueError("response truncated (stop_reason=max_tokens); raise max_tokens")
+        truncated = getattr(response, "stop_reason", None) == "max_tokens"
+        if truncated:
+            # Tolerated, not fatal: a capped call must never abort a multi-call run. The
+            # partial text is returned (a shorter utterance is fine; the extractor's JSON
+            # parser drops an unparseable body to []), and the cap is counted for reporting.
+            self._truncations += 1
         for block in getattr(response, "content", []):
             if getattr(block, "type", None) == "text":
                 text = block.text
                 if not isinstance(text, str):
                     raise ValueError(f"expected string text content, got {type(text).__name__}")
                 return text
+        if truncated:
+            return ""  # capped before emitting any text block
         raise ValueError("no text block in provider response")

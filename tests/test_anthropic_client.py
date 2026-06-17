@@ -80,10 +80,17 @@ def test_requires_model() -> None:
         AnthropicClient(ProviderConfig(provider="anthropic", api_key="k"), client=sdk)
 
 
-def test_truncated_response_raises() -> None:
+def test_truncated_response_returns_partial_and_counts() -> None:
+    # A capped call must not abort a multi-call run: return the partial text, bump the count.
     client, _ = _client(_Response(content=[_Block("text", "{partial")], stop_reason="max_tokens"))
-    with pytest.raises(ValueError, match="truncated"):
-        client.complete(system="s", messages=[ChatTurn("user", "hi")])
+    assert client.complete(system="s", messages=[ChatTurn("user", "hi")]) == "{partial"
+    assert client.truncations == 1
+
+
+def test_truncated_with_no_text_block_returns_empty() -> None:
+    client, _ = _client(_Response(content=[], stop_reason="max_tokens"))
+    assert client.complete(system="s", messages=[ChatTurn("user", "hi")]) == ""
+    assert client.truncations == 1
 
 
 def test_no_text_block_raises() -> None:
