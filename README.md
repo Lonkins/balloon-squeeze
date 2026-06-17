@@ -37,7 +37,7 @@ pytest                                              # full suite (both packages 
 pytest tests/test_corpus.py -k blind_class_guess    # the 49.4%-at-chance de-confounding gate
 ```
 
-The mock path reproduces every offline claim — within-world replay determinism, the de-confounding gate, the judge-error-corrected closed-loop recovery (paper Appendix A), and the power model. The real-model probes are owner-gated and run from an untracked internal driver; their results are reported in [paper/balloon-squeeze.md](paper/balloon-squeeze.md).
+The mock path reproduces every offline claim — within-world replay determinism, the de-confounding gate, the judge-error-corrected closed-loop recovery (paper Appendix A), and the power model. The real-model probes are owner-gated and run from an untracked internal driver; their results are reported in [paper/balloon-squeeze.md](paper/balloon-squeeze.md) and recorded as committed data in [results/real-model-runs.md](results/real-model-runs.md).
 
 ## What's new (honest positioning)
 
