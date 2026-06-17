@@ -45,6 +45,7 @@ The pieces exist; the combination does not. The closest prior work and the exact
 - **[03-build-roadmap.md](03-build-roadmap.md)** — phased plan, gated so power and determinism are proven *before* pre-registration lock.
 - **[04-kickoff-prompt.md](04-kickoff-prompt.md)** — a ready-to-paste prompt to start the build thread.
 - **[05-preregistration.md](05-preregistration.md)** — the pre-registration plan: primary vs secondary analyses, confirmatory gates, abort rules.
+- **[case-study-deconfounding.md](case-study-deconfounding.md)** — the methodological core: how an 82.8% construct confound in the checkability boundary was caught, *measured*, and driven back to chance (49.4%), with the regression tests that keep it there. Start here if you read one thing.
 
 ## Honesty note
 
