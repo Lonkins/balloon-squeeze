@@ -150,7 +150,7 @@ a null that fails it is flagged as a broken harness, not reported as a finding.
 
 ## 5. First results: a capability-gradient probe
 
-All runs were owner-gated for cost, temperature 0, with the audit boundary *declared*. The
+All runs were at temperature 0, with the audit boundary *declared*. The
 primary readout throughout is the within-`A1_announced` tag gap, run A1-first with a
 pre-committed early-stop on a clean-inert verdict.
 
@@ -267,7 +267,7 @@ regression test (`test_blind_class_guess_rate_is_at_chance`), and the closed-loo
 (Appendix A) and Figure 1 are regenerated and locked by the test suite. Real-provider runs are
 best-effort reproducible only — the provider API exposes no seed — so the pooled per-class counts
 underlying every reported point estimate and floor are committed as a data record, while per-game
-cluster counts and confidence intervals were produced by an untracked driver and are not
+cluster counts and confidence intervals were produced by the run driver and are not
 bit-reproducible.
 
 ## Ethics and broader impact

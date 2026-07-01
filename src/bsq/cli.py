@@ -67,7 +67,7 @@ def _replay(args: argparse.Namespace) -> int:
     print(f"replay seed={seed} arms={arms}")
     print(f"  arm-swap identical (agent claim stream): {'OK' if identical else 'FAILED'}")
     print(f"  deterministic (same seed+arm twice)    : {'OK' if deterministic else 'FAILED'}")
-    print("  note: real-provider determinism is BLOCKED-ON-P3 (needs a real client + key)")
+    print("  note: real-provider determinism is not checked here (needs a provider + key)")
     return 0 if identical and deterministic else 1
 
 

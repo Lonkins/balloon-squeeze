@@ -5,12 +5,17 @@ by ``make_client`` so the mock path never requires the SDK, and the SDK client i
 constructed lazily so this module can be imported (and unit-tested with an injected fake)
 without the package installed or a key present.
 
-Cost discipline is built in: ``max_tokens`` stays tight; the frozen ``system`` prefix is
-sent as a cache-control block (harmless when the prefix is below the cache minimum). The
-model name is never hard-coded — it comes from ``BSQ_MODEL`` (keep it the cheapest
-capable model for cost). A real SDK client refuses to construct without an explicit
-``BSQ_API_KEY``, so an ambient ``ANTHROPIC_API_KEY`` in the shell can never be spent by
-accident. The Messages API has **no seed**, so ``seed`` is accepted and ignored. A
+Cost discipline is built in: ``max_tokens`` stays tight, and the model name is never
+hard-coded — it comes from ``BSQ_MODEL`` (keep it the cheapest capable model for cost).
+Prompt caching is deliberately **not** used: the frozen ``system`` prefixes this instrument
+sends are only a few dozen tokens — far below the provider's minimum cacheable prefix — so a
+``cache_control`` block could never produce a cache read, and padding every request to clear
+that floor would bill kilobytes of boilerplate on each call, a net cost increase. If a future
+arm grows a genuinely large static shared prefix, put it in a cached ``system`` block, keep
+volatile per-utterance content in ``messages`` after the breakpoint, and confirm the win with
+``usage.cache_read_input_tokens > 0``. A real SDK client refuses to construct without an
+explicit ``BSQ_API_KEY``, so an ambient ``ANTHROPIC_API_KEY`` in the shell can never be spent
+by accident. The provider API has **no seed**, so ``seed`` is accepted and ignored. A
 truncated response (``stop_reason == "max_tokens"``) returns its **partial** text and bumps
 a ``truncations`` counter rather than raising: a truncated policy utterance is still usable
 and a truncated extractor body is dropped to ``[]`` by the parser, so a single capped call
@@ -39,7 +44,7 @@ def _make_sdk_client(cfg: ProviderConfig) -> Any:
 
 
 class AnthropicClient:
-    """An ``LLMClient`` backed by the Anthropic Messages API."""
+    """An ``LLMClient`` backed by the Anthropic provider API."""
 
     def __init__(self, cfg: ProviderConfig, *, client: Any = None) -> None:
         if not cfg.model:
@@ -62,14 +67,15 @@ class AnthropicClient:
         max_tokens: int = 256,
         temperature: float = 0.0,
         stop: list[str] | None = None,
-        seed: int | None = None,  # accepted and ignored — Messages API has no seed
+        seed: int | None = None,  # accepted and ignored — the provider API has no seed
     ) -> str:
         request: dict[str, Any] = {
             "model": self._model,
             "max_tokens": max_tokens,
             "temperature": temperature,
-            # Frozen prefix as a cache-control block (no-op below the cache minimum).
-            "system": [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
+            # Plain string, not a cache-control block: the prefix is far below the provider's
+            # cache minimum, so caching could never read (see the module docstring).
+            "system": system,
             "messages": [{"role": m.role, "content": m.content} for m in messages],
         }
         if stop:

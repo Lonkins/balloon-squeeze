@@ -65,13 +65,13 @@ def test_request_mapping_and_no_seed() -> None:
     )
     captured = messages.captured
     assert captured["model"] == "test-model"
-    assert "seed" not in captured  # Messages API has no seed
+    assert "seed" not in captured  # the provider API has no seed
     assert captured["temperature"] == 0.0
     assert captured["stop_sequences"] == ["END"]
     assert captured["messages"] == [{"role": "user", "content": "u"}]
-    # system is a cache-control block carrying the frozen prefix
-    assert captured["system"][0]["text"] == "sys"
-    assert captured["system"][0]["cache_control"] == {"type": "ephemeral"}
+    # system is a plain string — no cache-control wrapper (prefixes are far below the
+    # provider's cache minimum, so caching could never read; see the client docstring).
+    assert captured["system"] == "sys"
 
 
 def test_requires_model() -> None:

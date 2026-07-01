@@ -1,12 +1,12 @@
 # Real-model run record
 
 The committed source-of-record for every real-model (paid) result reported in
-[`paper/balloon-squeeze.md`](../paper/balloon-squeeze.md). Each run was owner-approved under
-a fixed cost cap; the deterministic, zero-spend claims (the de-confounding gate, the
-closed-loop recovery) are reproduced by the test suite, not recorded here.
+[`paper/balloon-squeeze.md`](../paper/balloon-squeeze.md). The deterministic, zero-spend
+results (the de-confounding gate, the closed-loop recovery) are reproduced by the test
+suite, not recorded here.
 
 **Why pooled, not per-game.** The within-`A1` tag gap and its CI are cluster-bootstrapped
-over games; the per-game cluster counts are computed in-process by the (untracked) driver and
+over games; the per-game cluster counts are computed in-process by the run driver and
 were not persisted, and the provider's API has no seed, so the paid runs are not
 bit-reproducible. The pooled per-class counts below pin the reported point estimates and
 floors; the CIs are the values the driver's `probe.gap_ci` returned at run time.
