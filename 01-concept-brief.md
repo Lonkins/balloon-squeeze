@@ -16,6 +16,7 @@ The closest systems each have part of the apparatus but not the manipulation:
 - [WOLF (NeurIPS 2025 workshop, arXiv:2512.09187)](https://arxiv.org/abs/2512.09187): separable deception production vs detection in a Werewolf engine — but no verifier-awareness toggle and no displacement metric.
 - [SycEval (AIES 2025, arXiv:2502.08177)](https://arxiv.org/abs/2502.08177) and [BASIL (arXiv:2508.16846)](https://arxiv.org/abs/2508.16846): characterize sycophancy under pressure, but in static, single-channel settings; they do not toggle a verifier or measure claims moving across a verifiability boundary.
 - [OpenAI CoT-monitoring (arXiv:2503.11926)](https://arxiv.org/abs/2503.11926): obfuscation emerges in the **same** channel under optimization pressure — channel-hiding, not migration of false *claims* across classes.
+- [Li et al. (arXiv:2508.00943)](https://arxiv.org/abs/2508.00943) and [Hua et al. (arXiv:2510.20487)](https://arxiv.org/abs/2510.20487): verifier/monitor **awareness** is already an established, manipulable variable (toggled and activation-steered) — so the awareness IV *alone* is prior art, not the contribution.
 
 Four ingredients are needed at once, and only this instrument has all four:
 1. an in-game **ground-truth partition** of every claim into *checkable* vs *uncheckable*, with the engine holding truth for **both** (existing benchmarks only verify the checkable side);
@@ -38,9 +39,9 @@ Per world *w*, define `ΔC(w)` and `ΔU(w)` as the within-world change in assert
 
 A scalar **Displacement Index `D = ΔU / |ΔC|`** is reported **only as a secondary**, with a Fieller/Bayesian-ratio CI, never as the primary estimand and never conditioned on `ΔC < 0` (the conditioning is what makes the ratio explode at the null — see [05-preregistration.md](05-preregistration.md)).
 
-## The single contribution
+## The contribution
 
-> The first pre-registered, replay-isolated causal estimate that announcing a verifier **redistributes** rather than reduces LLM dishonesty — across a checkability boundary where the engine holds truth on **both** sides.
+> A pre-registered, replay-isolated, **de-confounded** instrument for causally estimating whether announcing a verifier *reduces* or *redistributes* an LLM agent's false claims across a checkability boundary — with the engine holding truth on **both** sides and the boundary de-confounded from claim content. Its first two-tier probe returns a **calibrated upper bound** on displacement (a kill-rule-passing null with a faint, unresolved directional hint), **not** a displacement existence proof.
 
 ## Operational definitions (load-bearing)
 

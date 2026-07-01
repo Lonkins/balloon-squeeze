@@ -161,7 +161,7 @@ because the uncheckable channel was thin (≈ 2.8 claims/game).
 
 **A channel-depth repair.** Before reading more into the wide CI, we deepened the channel
 with a *class-neutral* coverage increase (the impostor addresses more statements per turn),
-lifting both channels (uncheckable ≈ 2.9 → ≈ 4.5 claims/game) without biasing the contrast.
+lifting both channels (uncheckable ≈ 2.8 → ≈ 4.5 claims/game) without biasing the contrast.
 
 **The gradient.** We then ran two capability tiers — the same weak model with the repaired
 channel, and one stronger model — through the **identical** pipeline, so a tier difference is
@@ -260,6 +260,7 @@ out of band, and lock it with a regression test.
 - QUACK, arXiv:2605.27068 — unverifiable-claim verdicts + replayable logs; static audit, no migration measure.
 - WOLF, arXiv:2512.09187 — separable deception production/detection in a Werewolf engine.
 - Li et al., 2025, arXiv:2508.00943 — monitor-awareness.
+- Hua et al., 2025, arXiv:2510.20487 — activation steering of monitor-awareness.
 - OpenAI, 2025, arXiv:2503.11926 — CoT-monitoring and within-channel obfuscation.
 - *From Hallucination to Scheming*, arXiv:2604.04788 — survey flagging pragmatic distortion as under-covered.
 

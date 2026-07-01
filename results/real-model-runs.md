@@ -7,7 +7,7 @@ closed-loop recovery) are reproduced by the test suite, not recorded here.
 
 **Why pooled, not per-game.** The within-`A1` tag gap and its CI are cluster-bootstrapped
 over games; the per-game cluster counts are computed in-process by the (untracked) driver and
-were not persisted, and the Messages API has no seed, so the paid runs are not
+were not persisted, and the provider's API has no seed, so the paid runs are not
 bit-reproducible. The pooled per-class counts below pin the reported point estimates and
 floors; the CIs are the values the driver's `probe.gap_ci` returned at run time.
 
@@ -17,7 +17,7 @@ spend across the whole project ≈ **$6.4**.
 
 ## 1. First probe — weak tier, thin channel (2026-06-17)
 
-Tier: **weak** (a small, fast model). Original (pre-repair) coverage nudge → ≈ 2.8 uncheckable
+Tier: **weak** (a small, fast model). Original (pre-repair) coverage nudge (`max_tokens` 256 policy) → ≈ 2.8 uncheckable
 claims/game. Full three-arm run.
 
 | arm | games | checkable false/total (rate) | uncheckable false/total (rate) | tag gap (U−C) [95% CI] | verdict |
