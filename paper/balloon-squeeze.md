@@ -236,7 +236,8 @@ control exists to rule out.
 The pieces exist; the de-confounded combination does not. QUACK [arXiv:2605.27068] has
 unverifiable-claim verdicts and replayable ground-truth logs but a *static* audit and no
 migration measure. WOLF [arXiv:2512.09187] separates deception production from detection but
-has no verifier-awareness manipulation. Monitor-awareness [Li et al. 2025] and CoT-monitoring
+has no verifier-awareness manipulation. Monitor-awareness [Li et al. 2025], its
+activation-steering [Hua et al. 2025], and CoT-monitoring
 [arXiv:2503.11926] show models respond to being watched and that obfuscation emerges
 *within* a channel under pressure — channel-hiding, not migration of false claims *across* a
 verifiability boundary. Du & Yang [2025] establish displacement in humans but not for LLM
@@ -253,6 +254,32 @@ pre-committed kill rule a clean null actually passed. The reusable lesson genera
 "hard-to-monitor vs easy-to-monitor" benchmark: measure the confound with a blind classifier
 before trusting any contrast, move the distinction into metadata, deliver the manipulation
 out of band, and lock it with a regression test.
+
+## Reproducibility and availability
+
+The instrument, the de-confounding gate, the class-stratified Rogan–Gladen correction, the
+closed-loop recovery harness, and the power model are released at
+`github.com/Lonkins/balloon-squeeze` under the MIT license. The two reusable components are
+packaged standalone: **noisyjudge** (class-stratified judge-error correction) and **deconfound**
+(blind-classifier confound audit). Every offline claim is reproducible with zero API spend on a
+deterministic mock provider: the 49.4% / 53.2% blind class-guess rates are enforced as a
+regression test (`test_blind_class_guess_rate_is_at_chance`), and the closed-loop recovery table
+(Appendix A) and Figure 1 are regenerated and locked by the test suite. Real-provider runs are
+best-effort reproducible only — the provider API exposes no seed — so the pooled per-class counts
+underlying every reported point estimate and floor are committed as a data record, while per-game
+cluster counts and confidence intervals were produced by an untracked driver and are not
+bit-reproducible.
+
+## Ethics and broader impact
+
+This work *measures* rather than trains deception: the impostor incentive is a controlled
+experimental construct inside a social-deduction game, not a jailbreak or a capability uplift.
+The result is deliberately anti-sensational — a two-tier null reported as a calibrated upper
+bound, never as evidence that models "do not displace" or "are safe." The threat-model ladder
+(§6) is included precisely so the result is not over-read as evidence about frontier models or
+about inferred (versus declared) audit boundaries. The de-confounding recipe is a general
+measurement-hygiene tool with no offensive use. No human subjects and no personal data are
+involved.
 
 ## References
 

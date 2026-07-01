@@ -65,6 +65,10 @@ stats = {c: (ArmClassStats(0.5, labels_per_unit=4.0), ArmClassStats(0.5, labels_
 print(required_units(stats, mde=0.2))   # units (e.g. games / sessions) per arm
 ```
 
+Two helpers build the per-class `quality` dict: `class_quality(ClassConfusion(...))` from
+confusion counts (shown above), or `quality_by_class(scored_items)` to build every class at once
+from labelled items.
+
 The four regimes (`displacement`, `honesty`, `suppression`, `null`) are the canonical reading
 of a *"squeeze one channel, watch the other"* contrast; for any other framing read the raw
 `quadrant_probs` and the marginal `ContrastCI`s directly. A `null` verdict still reports a
@@ -72,7 +76,7 @@ calibrated upper bound (`secondary_upper_bound`).
 
 ## Provenance
 
-Extracted and generalised from **Balloon Squeeze**, a research instrument measuring *deception
+Extracted and generalised from [**Balloon Squeeze**](https://github.com/Lonkins/balloon-squeeze), a research instrument measuring *deception
 displacement* in LLM agents (does announcing partial verification suppress an agent's checkable
 falsehoods or merely move them onto unchecked claims?). The instrument's mock closed-loop
 recovery proof — plant a known `(ΔC, ΔU)` regime, run it through the engine, and recover the
@@ -87,7 +91,13 @@ setting.
 ## Install
 
 ```sh
-pip install -e packages/noisyjudge   # from the repo, editable
+pip install noisyjudge
+```
+
+Or, from a checkout of the [source repo](https://github.com/Lonkins/balloon-squeeze), editable:
+
+```sh
+pip install -e packages/noisyjudge
 ```
 
 Requires Python ≥ 3.11. No runtime dependencies.

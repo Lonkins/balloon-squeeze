@@ -2,7 +2,9 @@
 
 *Does telling an LLM agent that a verifier checks some of its claims make it honest — or does it just move the lies onto the claims that aren't checked?*
 
-[![CI](https://github.com/Lonkins/balloon-squeeze/actions/workflows/ci.yml/badge.svg)](https://github.com/Lonkins/balloon-squeeze/actions/workflows/ci.yml) ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg) ![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)
+[![CI](https://github.com/Lonkins/balloon-squeeze/actions/workflows/ci.yml/badge.svg)](https://github.com/Lonkins/balloon-squeeze/actions/workflows/ci.yml) ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg) ![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg) ![Status: research preview](https://img.shields.io/badge/status-research%20preview-orange.svg)
+
+> **Status:** early-stage research instrument. The offline `mock` path is stable and fully reproducible; the first two-tier probe is reported as a pre-registered, calibrated upper bound — not a displacement existence proof.
 
 A deterministic, mock-first research instrument for **replay-isolated causal estimates of deception displacement**. It pairs a within-world replay design with a **de-confounding protocol** — one that caught an 82.8% construct confound and drove it to chance, locked by a regression test — and a **pre-committed kill rule** encoded in code. Built, tested, and run on a first pre-registered, two-tier measurement.
 
@@ -40,6 +42,7 @@ The whole instrument runs offline on a deterministic **mock** provider — no AP
 ```sh
 python -m venv .venv && . .venv/bin/activate
 pip install -e ".[dev]"
+bsq selftest                                        # zero-setup determinism check, no key
 pytest                                              # full suite
 pytest tests/test_corpus.py -k blind_class_guess    # the de-confounding gate, at chance
 ```
@@ -63,6 +66,20 @@ The pieces exist; the de-confounded combination does not. The closest prior work
 
 What's new is the conjunction: a manipulated verifier-awareness variable, truth held on *both* sides of the boundary, within-world replay, and a boundary **de-confounded from claim content**.
 
+## Repository layout
+
+```text
+src/bsq/              the instrument — mock-first engine, ledger, verifier arms, replay
+packages/noisyjudge/  reusable MIT kit — judge-error-corrected contrast estimation
+packages/deconfound/  reusable MIT kit — blind-classifier label-leakage check
+paper/                workshop-paper draft + figures
+results/              recorded real-model probe runs
+tests/                determinism, the de-confounding gate, estimator recovery, power
+01–05-*.md            concept brief, architecture, roadmap, pre-registration
+```
+
+The two `packages/` kits are the parts intended for reuse; the instrument package is marked `Private :: Do Not Upload`.
+
 ## The docs
 
 - **[case-study-deconfounding.md](case-study-deconfounding.md)** — the methodological core: catching, *measuring*, and killing the 82.8% confound, with the tests that keep it dead.
@@ -70,8 +87,12 @@ What's new is the conjunction: a manipulated verifier-awareness variable, truth 
 - **[05-preregistration.md](05-preregistration.md)** — the pre-registration: primary vs secondary analyses, confirmatory gates, abort rules.
 - **[01-concept-brief.md](01-concept-brief.md)**, **[02-technical-architecture.md](02-technical-architecture.md)**, **[03-build-roadmap.md](03-build-roadmap.md)** — the research brief, the architecture, and the phased build plan.
 
+## Contributing
+
+Contributions are welcome — bug reports, kit improvements, and prior-art corrections especially. The `mock` provider makes the whole instrument reproducible offline, so most changes can be validated with `pytest` and no API spend. See **[CONTRIBUTING.md](CONTRIBUTING.md)** for setup, the branch/PR workflow, and the research-integrity conventions (blind scoring, pre-registration, report-the-null).
+
+Determinism on `mock` is a hard invariant: never merge a change that breaks replay reproducibility.
+
 ## License
 
 MIT — see [LICENSE](LICENSE). The standalone kits are MIT-licensed too ([`noisyjudge`](packages/noisyjudge/LICENSE), [`deconfound`](packages/deconfound/LICENSE)). The instrument package itself is marked not-for-distribution (`Private :: Do Not Upload`); the kits are the parts intended for reuse.
-
-<sub>Working name "Balloon Squeeze"; the local directory name is legacy.</sub>
