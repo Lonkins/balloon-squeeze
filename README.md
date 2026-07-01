@@ -58,6 +58,7 @@ The pieces exist; the de-confounded combination does not. The closest prior work
 - [WOLF (NeurIPS 2025 workshop, arXiv:2512.09187)](https://arxiv.org/abs/2512.09187) shows deception *production* and *detection* are separable in a Werewolf engine — but no verifier-awareness manipulation and no displacement metric.
 - [*From Hallucination to Scheming* (arXiv:2604.04788)](https://arxiv.org/abs/2604.04788) surveys 50 deception benchmarks and flags **pragmatic distortion** (technically-true-but-misleading claims) as *critically under-covered*.
 - [OpenAI CoT-monitoring (arXiv:2503.11926)](https://arxiv.org/abs/2503.11926) shows obfuscation emerges **within the same channel** under optimization pressure — channel-hiding, not migration of false *claims* across a verifiability boundary.
+- Verifier/monitor **awareness** is already an established, manipulable variable — toggled by [Li et al. (arXiv:2508.00943)](https://arxiv.org/abs/2508.00943) and activation-steered by [Hua et al. (arXiv:2510.20487)](https://arxiv.org/abs/2510.20487) — so the awareness IV alone is not the contribution here.
 - In humans, monitoring one dimension displaces lying onto unobserved dimensions ([Du & Yang, *J. Econ. & Mgmt. Strategy* 2025](https://onlinelibrary.wiley.com/doi/10.1111/jems.70014)) — theoretical grounding, but not LLM/agentic and not replay-isolated.
 
 What's new is the conjunction: a manipulated verifier-awareness variable, truth held on *both* sides of the boundary, within-world replay, and a boundary **de-confounded from claim content**.

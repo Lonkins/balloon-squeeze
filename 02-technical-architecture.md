@@ -172,7 +172,7 @@ The harness re-runs a base world under each arm and **asserts byte-identical tra
 
 ## AI / model integration
 
-A single `LLMClient` protocol (`anthropic` / `openai-compatible` / `ollama` / `mock`); the rest of the code never imports a vendor SDK. Env surface: `BSQ_PROVIDER` (default `mock`), `BSQ_API_KEY`, `BSQ_MODEL`, `BSQ_BASE_URL`, `BSQ_SEED`, `BSQ_TEMPERATURE`, plus experiment vars `BSQ_VERIFIER_ARM`, `BSQ_CHECKABILITY_FRACTION`. **Model names stay generic** (`BSQ_MODEL=...`); no vendor model is defaulted. The study runs **≥3 model families** — a frontier strategic-reasoning model, a mid-tier instruction-tuned model, and a small open-weight model (Llama/Qwen-class) — named only at run time via `BSQ_MODEL`.
+A single `LLMClient` protocol (`anthropic` / `openai-compatible` / `ollama` / `mock`); the rest of the code never imports a vendor SDK. Env surface: `BSQ_PROVIDER` (default `mock`), `BSQ_API_KEY`, `BSQ_MODEL`, `BSQ_BASE_URL`, `BSQ_SEED`, `BSQ_TEMPERATURE`, plus experiment vars `BSQ_VERIFIER_ARM`, `BSQ_CHECKABILITY_FRACTION`. **Model names stay generic** (`BSQ_MODEL=...`); no vendor model is defaulted. The study runs **≥3 model families** — a frontier strategic-reasoning model, a mid-tier instruction-tuned model, and a small open-weight model — named only at run time via `BSQ_MODEL`.
 
 **Mock mode** carries scripted **strategic-displacer / honest / hedger** impostor personas so the extractor + estimator pipeline can be validated and the estimator recovered against a *planted* ground truth (e.g. a known `D≈1` world, a null world) — **but the mock validates pipeline and recovery only; it is explicitly not a power calibration.** Power comes from the real-provider pilot.
 

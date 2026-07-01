@@ -9,8 +9,20 @@ description = "Class-stratified, judge-error-corrected contrast estimation for n
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
+authors = [{ name = "Lonkins" }]
 keywords = ["llm", "evaluation", "llm-as-judge", "measurement-error", "rogan-gladen", "bootstrap"]
+classifiers = [
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "License :: OSI Approved :: MIT License",
+]
 dependencies = []
+
+[project.urls]
+Source = "https://github.com/Lonkins/balloon-squeeze"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/noisyjudge"]
