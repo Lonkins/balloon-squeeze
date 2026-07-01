@@ -186,7 +186,7 @@ A single `LLMClient` protocol (`anthropic` / `openai-compatible` / `ollama` / `m
 ## Suggested project structure
 
 ```
-balloon-squeeze/                  (repo dir currently: reverse-turing-theater/)
+balloon-squeeze/
 ├─ README.md
 ├─ pyproject.toml
 ├─ .env.example                   # documents BSQ_* vars; defaults to mock

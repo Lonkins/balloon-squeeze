@@ -58,14 +58,26 @@ flag, an instruction the measurement path is blind to), not through the item tex
 it: re-run `separability_report` as a regression test so the confound cannot creep back.
 
 ```python
+from deconfound import is_confounded
+
 # de-confounded: the same string assigned both conditions across draws
 items = [(e, "checkable") for e in pool] + [(e, "uncheckable") for e in pool]
 assert not is_confounded(items)   # per-form oracle and NB both at chance
 ```
 
+## API
+
+- `separability_report(items, *, seed=0, tolerance=0.05) -> SeparabilityReport` — run both blind classifiers and the majority baseline, bundled into a verdict.
+- `is_confounded(items, *, seed=0, tolerance=0.05) -> bool` — the one-call boolean (`True` if the labels are recoverable from content above chance).
+- `blind_guess_rate(items, *, seed=0) -> float` — word-level Naive Bayes accuracy on a holdout split.
+- `per_form_oracle(items) -> float` — the ceiling of any classifier that sees only the text.
+- `SeparabilityReport` — fields `nb_holdout`, `per_form_oracle`, `chance`, `n_items`, `n_classes`, `tolerance`; properties `is_confounded`, `verdict`.
+
+`items` is any iterable of `(text, label)` pairs (`LabeledItem`); labels can be any hashable.
+
 ## Provenance
 
-Extracted from **Balloon Squeeze**, where this check caught a checkable/uncheckable corpus
+Extracted from [**Balloon Squeeze**](https://github.com/Lonkins/balloon-squeeze), where this check caught a checkable/uncheckable corpus
 that a blind classifier separated at **82.8–95.3%** (the "uncheckable" class was collinear
 with "is-an-intention-claim"), and the metadata + out-of-band redesign drove it to **49.4%**
 (chance). The recipe generalises to any condition-vs-content confound.
@@ -73,7 +85,13 @@ with "is-an-intention-claim"), and the metadata + out-of-band redesign drove it 
 ## Install
 
 ```sh
-pip install -e packages/deconfound   # from the repo, editable
+pip install deconfound
+```
+
+Or, from a checkout of the [source repo](https://github.com/Lonkins/balloon-squeeze), editable:
+
+```sh
+pip install -e packages/deconfound
 ```
 
 Requires Python ≥ 3.11. No runtime dependencies.

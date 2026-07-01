@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this software or its methods, please cite it as below."
+title: "Balloon Squeeze: a replay-isolated, de-confounded instrument for measuring deception displacement across an audit boundary"
+abstract: >-
+  A deterministic, mock-first research instrument for replay-isolated causal
+  estimates of deception displacement in LLM agents, pairing a within-world
+  replay design with a de-confounding protocol and a pre-committed kill rule.
+  Ships two standalone MIT kits: noisyjudge (class-stratified,
+  judge-error-corrected contrast estimation) and deconfound (a blind-classifier
+  label-leakage audit for A/B contrasts).
+type: software
+authors:
+  - name: "Lonkins"
+repository-code: "https://github.com/Lonkins/balloon-squeeze"
+url: "https://github.com/Lonkins/balloon-squeeze"
+license: MIT
+version: "0.0.1"
+keywords:
+  - ai-safety
+  - deception
+  - scalable-oversight
+  - llm-as-judge
+  - construct-validity
+  - measurement
