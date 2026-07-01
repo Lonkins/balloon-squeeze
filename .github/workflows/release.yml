@@ -5,7 +5,7 @@
 # Trusted Publisher for that package name on TestPyPI (OIDC — no API token is stored in the
 # repo). Both wheels are already proven to build and install clean from a non-editable wheel
 # into a fresh venv. To publish to real PyPI instead of TestPyPI, delete the `repository-url`
-# line. Publishing is an owner action, gated on settling the package name (the repo rename).
+# line. Publishing is a maintainer step, triggered by pushing a version tag.
 
 name: Release to TestPyPI
 

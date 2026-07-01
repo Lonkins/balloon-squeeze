@@ -4,12 +4,12 @@ A single-arm (``A0_off``) variance pilot. It runs ``n_games``, collects the impo
 main-channel false labels per class, and reports the per-class statistics the power model
 consumes (observed false rate, claims-per-game, and a clustering estimate). Provider-
 agnostic: pass mock/structured policies for an offline dry run, or the LLM policy +
-extractor for the real (gated) run. The falseness sensitivity/specificity come from a
+extractor for the real provider-backed run. The falseness sensitivity/specificity come from a
 separate labeled holdout, not from the pilot games, so they are supplied to
 ``required_games`` rather than estimated here.
 
 N is sized assuming the A1 variance resembles A0 (same model, similar rates) — the pilot
-measures one arm to keep spend minimal.
+measures a single arm.
 """
 
 from __future__ import annotations

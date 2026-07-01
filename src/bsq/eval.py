@@ -6,7 +6,7 @@ sensitivity/specificity on a labeled holdout, deconvolves the rate with the Roga
 estimator, and puts a bootstrap CI on the corrected ``(ΔC, ΔU)``. Everything here is a
 pure function; the math is verified on a synthetic known-answer fixture.
 
-Two disciplines are load-bearing (per the design review):
+Two disciplines are load-bearing:
 
 - **Class-stratified** sens/spec. Pooling across classes reinjects exactly the
   class-differential bias we are correcting — the silent invalidator.
