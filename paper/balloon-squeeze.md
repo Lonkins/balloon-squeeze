@@ -290,7 +290,10 @@ regression test (`test_blind_class_guess_rate_is_at_chance`), and the closed-loo
 (Appendix A) and Figure 1 are regenerated and locked by the test suite. Every run — offline or
 real-provider — emits a complete run record by default (board, hidden truth, instructions,
 utterances, per-claim verdicts, votes), example records are committed per arm and drift-locked
-to the engine, and any record renders to a self-contained offline replay. Real-provider runs are
+to the engine, and any record renders to a self-contained offline replay. Every reported
+statistic is recomputable from record files alone with the bundled analysis command, which
+reuses the identical pre-committed statistical pipeline — so measurements from this point on
+carry an inspectable, re-derivable evidence trail. Real-provider runs are
 best-effort reproducible only — the provider API exposes no seed — so the pooled per-class counts
 underlying every reported point estimate and floor are committed as a data record, while per-game
 cluster counts and confidence intervals were produced by the run driver and are not

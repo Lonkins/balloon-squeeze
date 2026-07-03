@@ -28,7 +28,10 @@ regenerate them with `python -c "from pathlib import Path; from bsq.gallery impo
 write_example_gallery; write_example_gallery(Path('examples/transcripts'))"`). Every game
 run persists a run record by default (`runs/`, gitignored); render one with
 `bsq render <record.json>` to eyeball a change in context. The record format is a public
-contract — see [docs/record-format.md](docs/record-format.md) before changing it.
+contract — see [docs/record-format.md](docs/record-format.md) before changing it. Statistics
+are recomputable from records with `bsq analyze` (same doc); the analysis reuses the
+in-process statistical functions, so never fork a statistic into `analyze.py` — change it in
+`probe.py` (a pre-registration matter) and the analysis inherits it.
 
 ### Working on the kits
 

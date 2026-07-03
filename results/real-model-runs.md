@@ -5,6 +5,13 @@ The committed source-of-record for every real-model (paid) result reported in
 results (the de-confounding gate, the closed-loop recovery) are reproduced by the test
 suite, not recorded here.
 
+> **Recomputability (2026-07-03, forward-looking).** Runs from this point on persist a
+> complete per-game run record ([format](../docs/record-format.md)) and re-derive every
+> reported statistic from those files via `bsq analyze` — so future tables in this document
+> will be recomputable by anyone from committed evidence. The historical summaries below
+> predate record capture and remain exactly as recorded: their per-game data were not
+> persisted and they are **not** recomputable.
+
 **Why pooled, not per-game.** The within-`A1` tag gap and its CI are cluster-bootstrapped
 over games; the per-game cluster counts are computed in-process by the run driver and
 were not persisted, and the provider's API has no seed, so the paid runs are not
