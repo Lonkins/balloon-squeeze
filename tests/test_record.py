@@ -91,6 +91,35 @@ def test_audit_tags_present_iff_scope_announced() -> None:
     assert tags == {AUDITED, NOT_AUDITED}
 
 
+def test_board_tags_equal_the_displayed_menu_tags() -> None:
+    """The record board stores what the menus showed — the shuffle under a
+    shuffled-tags arm, the true class under A1_announced."""
+    from bsq.models import PropositionClass
+    from bsq.views import agent_menu_views
+
+    for arm_name in ("A1_shuffled_tags", "A1_announced"):
+        cfg = GameConfig(n_topics=6, verifier_arm=arm_name)
+        result = run_game(cfg, 9)
+        record = finalize(result.record_game)
+        menu = agent_menu_views(
+            result.game.proposition_ledger, result.game.arm, world_seed=9
+        )
+        menu_tags = {v.id: v.audit_tag for v in menu}
+        for b in record["game"]["board"]:
+            assert b["audit_tag"] == menu_tags[b["id"]], (arm_name, b["id"])
+    # and the shuffle genuinely differs from the true class somewhere (else the pin
+    # would be vacuous for the shuffled arm)
+    cfg = GameConfig(n_topics=6, verifier_arm="A1_shuffled_tags")
+    result = run_game(cfg, 9)
+    by_id = {p.id: p for p in result.game.proposition_ledger}
+    record = finalize(result.record_game)
+    assert any(
+        (b["audit_tag"] == AUDITED)
+        != (by_id[b["id"]].class_ is PropositionClass.CHECKABLE)
+        for b in record["game"]["board"]
+    )
+
+
 def test_game_payload_is_byte_identical_across_runs() -> None:
     _, first = _interactive_result_and_record()
     _, second = _interactive_result_and_record()
