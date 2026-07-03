@@ -190,5 +190,10 @@ class LLMPolicy:
                 )
         else:
             parts.append("Discuss honestly and reason about which statements ring true.")
+        if ctx.arm.is_placebo_authority and ctx.announcement:
+            # The placebo-authority manipulation: the room announcement (a moderator with
+            # no verification) is delivered verbatim to every participant, so the arm
+            # actually differs from A0_off on the model path.
+            parts.append(ctx.announcement)
         parts.append("Stay in character at all times.")
         return " ".join(parts)

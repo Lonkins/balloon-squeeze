@@ -263,15 +263,19 @@ def _masthead(setup: Mapping[str, Any]) -> str:
 def _board(board: Sequence[Mapping[str, Any]]) -> str:
     items = []
     for entry in board:
-        audited = entry["class"] == "checkable"
+        # Style by the DISPLAYED tag, never by true class: under a shuffled-tags arm
+        # the board shows the shuffle the agents saw. Non-tagging arms displayed no
+        # boundary, so no item gets the audited border.
+        displayed_audited = entry["audit_tag"] == "[AUDITED]"
         tag = ""
         if entry["audit_tag"]:
-            css = "audit" if audited else "noaudit"
+            css = "audit" if displayed_audited else "noaudit"
             tag = f'<span class="tag {css}">{_esc(entry["audit_tag"])}</span>'
         truth_css = "truth-true" if entry["truth_value"] else "truth-false"
         truth_label = "TRUE" if entry["truth_value"] else "FALSE"
         items.append(
-            f'<li class="{"audited" if audited else ""}">{_esc(entry["surface_form"])}'
+            f'<li class="{"audited" if displayed_audited else ""}">'
+            f'{_esc(entry["surface_form"])}'
             f'{tag}<span class="tag {truth_css}">{truth_label}</span></li>'
         )
     return (
