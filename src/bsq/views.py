@@ -91,14 +91,7 @@ def agent_menu_views(
     world-pure substream independent of true class (``world_seed`` required), decoupling
     tag semantics from oracle coverage; the oracle itself is untouched.
     """
-    show_tag = arm.announces_scope
-    tags = [_audit_tag(p) if show_tag else None for p in ledger]
-    if show_tag and arm.shuffled_tags:
-        if world_seed is None:
-            raise ValueError("shuffled_tags arm requires world_seed for the tag shuffle")
-        rng = substream(world_seed, "shuffled_tags")
-        shuffled = [AUDITED if rng.random() < 0.5 else NOT_AUDITED for _ in ledger]
-        tags = list(shuffled)
+    tags = displayed_audit_tags(ledger, arm, world_seed=world_seed)
     return [
         AgentMenuView(
             id=p.id,
@@ -111,6 +104,28 @@ def agent_menu_views(
         )
         for i, p in enumerate(ledger)
     ]
+
+
+def displayed_audit_tags(
+    ledger: Sequence[Proposition],
+    arm: VerifierArm,
+    *,
+    world_seed: int | None = None,
+) -> list[str | None]:
+    """The audit tags exactly as the agents' menus display them.
+
+    ``None`` for every item when the arm does not announce its scope; the world-pure
+    shuffle under a ``shuffled_tags`` arm. The single source of tag truth — the run
+    record's board uses this too, so the record always shows what the menu showed.
+    """
+    if not arm.announces_scope:
+        return [None for _ in ledger]
+    if arm.shuffled_tags:
+        if world_seed is None:
+            raise ValueError("shuffled_tags arm requires world_seed for the tag shuffle")
+        rng = substream(world_seed, "shuffled_tags")
+        return [AUDITED if rng.random() < 0.5 else NOT_AUDITED for _ in ledger]
+    return [_audit_tag(p) for p in ledger]
 
 
 def _audit_tag(p: Proposition) -> str:

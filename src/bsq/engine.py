@@ -38,6 +38,7 @@ from bsq.models import (
     GameConfig,
     Persona,
     Proposition,
+    PropositionClass,
     Role,
     RoundVotes,
     Utterance,
@@ -138,7 +139,8 @@ def run_game(
     bus.emit("verifier_announcement", arm=arm.name, announced=announcement is not None)
 
     instruction_ctx = RoundContext(
-        arm=arm, announcement=announcement, speaker_names=speaker_names, world_seed=seed
+        arm=arm, announcement=announcement, speaker_names=speaker_names, world_seed=seed,
+        interactive=cfg.interactive,
     )
     instructions = {
         agent.id: policies[agent.id].instruction_text(agent, instruction_ctx)
@@ -167,6 +169,7 @@ def run_game(
                     history=tuple(history_entries),
                     speaker_names=speaker_names,
                     world_seed=seed,
+                    interactive=True,
                 )
                 if cfg.interactive
                 else round_ctx
@@ -200,16 +203,23 @@ def run_game(
                 # Consequence coupling: the verifier's verdicts are announced to the
                 # group before the vote. The bulletin joins the shared history (visible
                 # to every later speaker and voter) but is never extracted or scored.
-                speaker_of = {c.proposition_id: c.speaker_id for c in round_claims}
                 by_id = {prop.id: prop for prop in ledger}
+                # One verdict per checkable claim, in claim order (verify_checkable's
+                # contract) — zip claim to verdict so each announcement names the seat
+                # whose claim was actually scored, even when a proposition is claimed
+                # by several speakers in the same round.
+                verdict_claims = [
+                    c for c in round_claims
+                    if by_id[c.proposition_id].class_ is PropositionClass.CHECKABLE
+                ]
                 entries: list[dict[str, object]] = [
                     {
-                        "speaker_id": speaker_of.get(v.proposition_id, "?"),
+                        "speaker_id": claim.speaker_id,
                         "proposition_id": v.proposition_id,
                         "surface_form": by_id[v.proposition_id].surface_form,
                         "verdict": "correct" if v.correct else "false",
                     }
-                    for v in round_verdicts
+                    for claim, v in zip(verdict_claims, round_verdicts, strict=True)
                 ]
                 bulletins_by_round[round_idx] = entries
                 names = dict(speaker_names)
@@ -253,6 +263,7 @@ def run_game(
             history=tuple(history_entries),
             speaker_names=speaker_names,
             world_seed=seed,
+            interactive=cfg.interactive,
         )
         ask = getattr(policies[impostor_id], "comprehension", None)
         if callable(ask):
@@ -331,6 +342,7 @@ def _run_vote(
         history=tuple(all_utterances),
         speaker_names=speaker_names,
         world_seed=seed,
+        interactive=True,
     )
     votes: list[VoteCast] = []
     for agent in living:

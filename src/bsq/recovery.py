@@ -248,8 +248,18 @@ def feedback_recovery(
     claims — claims about items whose learned status was derivable from bulletins in
     strictly earlier rounds — with the information state reconstructed from the run
     record itself. The CI is a seeded game-clustered bootstrap (percentile, 95%).
+
+    Requires an interactive config and a broadcasting arm: bulletins are the only
+    boundary channel, so a bulletin-free configuration has no informed claims and the
+    readout would be silently meaningless — it raises instead.
     """
+    from bsq.config import resolve_arm
     from bsq.record import finalize
+
+    if not cfg.interactive:
+        raise ValueError("feedback_recovery requires an interactive config (bulletins)")
+    if not resolve_arm(arm_name).broadcasts_verdicts:
+        raise ValueError(f"feedback_recovery requires a broadcasting arm, got {arm_name}")
 
     per_game: list[tuple[list[bool], list[bool]]] = []
     naive_false: dict[PropositionClass, list[bool]] = {cls: [] for cls in PropositionClass}

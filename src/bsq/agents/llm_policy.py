@@ -178,9 +178,10 @@ class LLMPolicy:
                 )
             elif ctx.arm.announces_verifier:
                 parts.append("A verifier is fact-checking some of the claims you make.")
-            if ctx.arm.announces_verifier and ctx.arm.broadcasts_verdicts:
+            if ctx.interactive and ctx.arm.announces_verifier and ctx.arm.broadcasts_verdicts:
                 parts.append(
-                    "Claims the verifier finds false are announced to the group."
+                    "The verifier's verdicts on the claims it checks — correct and "
+                    "false alike — are announced to the group."
                 )
             if ctx.arm.instructed_routing:
                 parts.append(
