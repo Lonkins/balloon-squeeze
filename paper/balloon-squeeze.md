@@ -77,6 +77,20 @@ each arm with byte-identical agent behaviour up to the point the announcement ch
 contrast is therefore taken within a world, not between independent samples — a markedly
 cleaner causal lever than the between-condition comparisons standard in this literature.
 
+**Deliberation modes.** The instrument supports two configurations. In **monologue** mode
+each agent contributes against the statement board without seeing the other agents' turns,
+and rounds carry no consequence — deception pressure comes only from the impostor's
+instructions and (in announced arms) the audit tags. In **interactive** mode every
+contribution from the second turn onward is produced with the full prior discussion in
+context, and each round closes with a vote by all living participants: a plurality
+eliminates, and eliminating the impostor ends the game — so the deception incentive is
+consequential. Both modes preserve determinism and the replay-identity contract (vote
+randomness draws from a dedicated arm-independent stream). **All results reported in this
+paper were measured in monologue mode**; the interactive mode is instrument capability
+whose measurement awaits a funded run (§6). Every run, in either mode, emits a complete
+run record — board, hidden truth, instructions, utterances, per-claim verdicts, votes —
+that renders to a watchable offline replay.
+
 ## 3. De-confounding the checkability boundary
 
 The first corpus encoded checkability in content: every checkable item was a logged public
@@ -150,7 +164,10 @@ a null that fails it is flagged as a broken harness, not reported as a finding.
 
 ## 5. First results: a capability-gradient probe
 
-All runs were at temperature 0, with the audit boundary *declared*. The
+All runs were at temperature 0, with the audit boundary *declared*, in the **monologue
+configuration** (§2) — agents did not see one another's contributions and no votes
+occurred, so the "social" pressure on the impostor was limited to its role instructions.
+The
 primary readout throughout is the within-`A1_announced` tag gap, run A1-first with a
 pre-committed early-stop on a clean-inert verdict.
 
@@ -225,6 +242,12 @@ The result is honestly scoped on three axes, and the threat-model ladder is the 
   between-world variance; this rules out only a gross effect (gap > ≈ 0.27). A subtle effect —
   including the +0.07 hint — is not excluded, and resolving it needs more worlds, not deeper
   per-world coverage.
+- **Interaction level.** The measured runs are non-interactive monologues: agents never saw
+  one another's contributions and faced no votes, so the deception pressure was instructional
+  rather than social. The instrument now supports an interactive mode (discussion visibility,
+  per-round votes, elimination stakes — §2) under which peer scrutiny could plausibly sharpen
+  or suppress displacement; measuring that is future, funded work, and nothing here speaks to
+  it.
 
 Two further caveats: real-provider runs are best-effort reproducible (the API has no seed),
 softening the within-world claim on the live path relative to mock; and the explicit
@@ -264,7 +287,10 @@ packaged standalone: **noisyjudge** (class-stratified judge-error correction) an
 (blind-classifier confound audit). Every offline claim is reproducible with zero API spend on a
 deterministic mock provider: the 49.4% / 53.2% blind class-guess rates are enforced as a
 regression test (`test_blind_class_guess_rate_is_at_chance`), and the closed-loop recovery table
-(Appendix A) and Figure 1 are regenerated and locked by the test suite. Real-provider runs are
+(Appendix A) and Figure 1 are regenerated and locked by the test suite. Every run — offline or
+real-provider — emits a complete run record by default (board, hidden truth, instructions,
+utterances, per-claim verdicts, votes), example records are committed per arm and drift-locked
+to the engine, and any record renders to a self-contained offline replay. Real-provider runs are
 best-effort reproducible only — the provider API exposes no seed — so the pooled per-class counts
 underlying every reported point estimate and floor are committed as a data record, while per-game
 cluster counts and confidence intervals were produced by the run driver and are not

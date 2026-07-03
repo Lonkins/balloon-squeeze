@@ -104,6 +104,25 @@ construction.
 
 **DoD:** a defensible, pre-registered causal estimate with all controls reported.
 
+## Remaining gates
+
+Everything buildable without real-model spend is built: the de-confounded instrument with
+monologue **and** interactive deliberation modes, default-on run records with a committed
+example gallery, the offline replay renderer with a video path, the two standalone kits, and
+the workshop-paper draft. What remains is exactly this list — each item needs money or a
+maintainer decision, nothing else is open:
+
+1. **Funded interactive re-run.** Real-model measurement under the interactive mode (and/or
+   the more-worlds run the power model sizes at ~180–300 worlds/arm to resolve the +0.07
+   hint). Cost driver: per-game model calls at confirmatory N.
+2. **Real human-labeled holdout.** The extractor gate on human gold labels (live extraction
+   + labeling effort); until then the gate stands on the synthetic known-answer fixture.
+3. **Venue submission.** Choosing the workshop, the venue-format conversion, and the
+   submission-time authorship/disclosure decisions — maintainer actions outside the repo.
+4. **Production package-index promotion.** Publishing `noisyjudge`/`deconfound` beyond the
+   test index (drop the `repository-url` line in the release workflow; configure the
+   production trusted publisher).
+
 ## Working agreements (every phase)
 
 - **Determinism is sacred.** Never merge a change that breaks replay identity on mock.

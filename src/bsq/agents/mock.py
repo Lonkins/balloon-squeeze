@@ -13,7 +13,7 @@ import random
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from bsq.agents.policy import RoundContext
+from bsq.agents.policy import RoundContext, deterministic_vote
 from bsq.models import (
     Agent,
     Proposition,
@@ -59,6 +59,23 @@ class ImpostorPolicy:
         value = (not prop.truth_value) if lied else prop.truth_value
         return StructuredClaim(proposition_id=prop.id, asserted_value=value)
 
+    def instruction_text(self, agent: Agent, ctx: RoundContext) -> str:
+        return (
+            "Scripted mock impostor: asserts one claim per (class x placebo) cell each "
+            f"round, lying at a fixed class-symmetric rate of {self.lie_rate}."
+        )
+
+    def vote(
+        self,
+        *,
+        agent: Agent,
+        living: Sequence[Agent],
+        round_idx: int,
+        rng: random.Random,
+        ctx: RoundContext,
+    ) -> str:
+        return deterministic_vote(agent, living, rng)
+
 
 @dataclass(frozen=True, slots=True)
 class HonestPolicy:
@@ -76,3 +93,17 @@ class HonestPolicy:
         prop = rng.choice(list(ledger))
         claim = StructuredClaim(proposition_id=prop.id, asserted_value=prop.truth_value)
         return Utterance(speaker_id=agent.id, round_idx=round_idx, structured=(claim,))
+
+    def instruction_text(self, agent: Agent, ctx: RoundContext) -> str:
+        return "Scripted mock panelist: asserts one truthful claim per round."
+
+    def vote(
+        self,
+        *,
+        agent: Agent,
+        living: Sequence[Agent],
+        round_idx: int,
+        rng: random.Random,
+        ctx: RoundContext,
+    ) -> str:
+        return deterministic_vote(agent, living, rng)

@@ -11,7 +11,7 @@ from bsq.engine import run_game
 from bsq.extract import make_llm_extractor
 from bsq.ledger import author_ledger
 from bsq.llm.base import ChatTurn
-from bsq.models import STANDARD_ARMS, Agent, GameConfig, Persona, Role
+from bsq.models import STANDARD_ARMS, Agent, GameConfig, Persona, Role, Utterance
 
 
 @dataclass(frozen=True)
@@ -153,3 +153,93 @@ def test_default_extractor_does_not_extract_free_text() -> None:
     policy = LLMPolicy(FakeLLM("just talking, no structure"))
     result = run_game(GameConfig(), 0, impostor_policy=policy, panelist_policy=policy)
     assert result.game.claims == []
+
+
+def _interactive_ctx(history: tuple[Utterance, ...]) -> RoundContext:
+    return RoundContext(
+        arm=STANDARD_ARMS["A0_off"],
+        announcement=None,
+        history=history,
+        speaker_names=(("p0", "Ash"), ("p1", "Nat"), ("p2", "Cyrus")),
+    )
+
+
+def test_discussion_so_far_renders_prior_utterances_verbatim() -> None:
+    client = _RecordingLLM()
+    policy = LLMPolicy(client)
+    ledger = author_ledger(GameConfig(), 2)
+    history = (
+        Utterance(speaker_id="p0", round_idx=0, text="The manifest looked odd to me."),
+        Utterance(speaker_id="p2", round_idx=0, text="I trust the audit numbers."),
+    )
+    policy.act(
+        agent=_agent(Role.PANELIST),
+        ledger=ledger,
+        round_idx=1,
+        rng=random.Random(0),
+        ctx=_interactive_ctx(history),
+    )
+    assert "Discussion so far:" in client.last_user
+    assert "Ash: The manifest looked odd to me." in client.last_user
+    assert "Cyrus: I trust the audit numbers." in client.last_user
+
+
+def test_monologue_prompt_has_no_discussion_block() -> None:
+    client = _RecordingLLM()
+    policy = LLMPolicy(client)
+    ledger = author_ledger(GameConfig(), 2)
+    policy.act(
+        agent=_agent(Role.PANELIST), ledger=ledger, round_idx=1, rng=random.Random(0), ctx=_ctx()
+    )
+    assert "Discussion so far:" not in client.last_user
+
+
+def _make_panelist(i: int, name: str) -> Agent:
+    persona = Persona(id=f"x{i}", name=name, blurb="b", voice="dry")
+    return Agent(id=f"p{i}", persona=persona, role=Role.PANELIST)
+
+
+def _living() -> list[Agent]:
+    return [_make_panelist(0, "Ash"), _make_panelist(1, "Nat"), _make_panelist(2, "Cyrus")]
+
+
+def test_llm_vote_parses_exact_name_to_agent_id() -> None:
+    policy = LLMPolicy(FakeLLM("Cyrus"))
+    living = _living()
+    target = policy.vote(
+        agent=living[1],  # Nat votes
+        living=living,
+        round_idx=0,
+        rng=random.Random(0),
+        ctx=_interactive_ctx(()),
+    )
+    assert target == "p2"
+
+
+def test_llm_vote_prompt_names_only_living_others() -> None:
+    client = _RecordingLLM()
+    policy = LLMPolicy(client)
+    living = _living()
+    policy.vote(
+        agent=living[1],
+        living=living,
+        round_idx=0,
+        rng=random.Random(0),
+        ctx=_interactive_ctx(()),
+    )
+    assert "Ash" in client.last_user and "Cyrus" in client.last_user
+    assert "Nat" not in client.last_user.split("Participants still in the discussion:")[1]
+
+
+def test_llm_vote_garbage_records_abstain() -> None:
+    for garbage in ("no idea, honestly!", "", "Everyone", "Nat"):  # incl. self-vote
+        policy = LLMPolicy(FakeLLM(garbage))
+        living = _living()
+        target = policy.vote(
+            agent=living[1],
+            living=living,
+            round_idx=0,
+            rng=random.Random(0),
+            ctx=_interactive_ctx(()),
+        )
+        assert target == "abstain", f"expected abstain for {garbage!r}"

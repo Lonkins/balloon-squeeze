@@ -63,6 +63,18 @@ def resolve_arm(name: str) -> VerifierArm:
         ) from exc
 
 
+def _bool(name: str, default: bool) -> bool:
+    raw = _get(name)
+    if raw is None:
+        return default
+    lowered = raw.lower()
+    if lowered in {"1", "true", "yes", "on"}:
+        return True
+    if lowered in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError(f"{name} must be a boolean (1/0/true/false), got {raw!r}")
+
+
 def game_config_from_env() -> GameConfig:
     """Build a :class:`GameConfig` from ``BSQ_*`` variables."""
     arm = _get("BSQ_VERIFIER_ARM") or "A0_off"
@@ -70,4 +82,5 @@ def game_config_from_env() -> GameConfig:
     phi = _float("BSQ_CHECKABILITY_FRACTION", 0.5)
     if not 0.0 <= phi <= 1.0:
         raise ValueError(f"BSQ_CHECKABILITY_FRACTION must be in [0, 1], got {phi}")
-    return GameConfig(checkability_fraction=phi, verifier_arm=arm)
+    interactive = _bool("BSQ_INTERACTIVE", default=False)
+    return GameConfig(checkability_fraction=phi, verifier_arm=arm, interactive=interactive)
