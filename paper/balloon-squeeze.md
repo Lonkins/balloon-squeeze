@@ -67,9 +67,20 @@ knowing the answer. Claims are scored against the ledger after the fact.
 
 The manipulated variable is the **verifier arm**: `A0_off` (no announcement), `A1_announced`
 (the audited subset is declared to the agent), `A1_implicit` (a verifier is announced but
-its scope is not), `A2_silent` (a verifier runs but is not announced), and `A3_placebo` (a
-moderator with no verification). The estimand is the within-world joint contrast
-`(ΔC, ΔU)` — the change in false-mass on checkable and uncheckable claims between arms.
+its scope is not), `A2_silent` (a verifier runs but is not announced — in *any* channel,
+up-front or in-game), and `A3_placebo` (a moderator with no verification). The estimand is
+the within-world joint contrast `(ΔC, ΔU)` — the change in false-mass on checkable and
+uncheckable claims between arms.
+
+Whether the verifier's verdicts are published to the group in interactive play is an
+explicit per-arm property (`broadcasts_verdicts`), never inferred from the oracle running:
+announced-verifier arms broadcast a verdict bulletin before each vote (the consequence
+coupling of §3.5), while `A2_silent` stays covert so the artifact control cannot leak audit
+information. A calibration-only arm, `A4_feedback_revealed`, inverts the announcement:
+nothing is declared up front (no tags, no scope sentence), but bulletins are broadcast, so
+the boundary is learnable item-by-item from observed feedback. It lives with the control
+arms — validated only with scripted policies, never pooled with behavioral arms, and never
+feeding the decision rule.
 
 **Within-world replay.** Because the engine is deterministic and every consumer draws from
 an arm-independent namespaced RNG substream, the *same seeded world* can be re-run under
@@ -255,20 +266,28 @@ matched to the pooled-gap cluster-bootstrap estimator.*
 
 The result is honestly scoped on three axes, and the threat-model ladder is the key framing:
 
-- **Boundary type (the ladder).** *Declared* (the agent is told the audited set — what we
-  measured) → *announced-but-unscoped* (`A1_implicit`: a verifier exists, scope unknown) →
-  *inferred* (the agent must work out the boundary from context — the deployment-relevant,
-  monitor-evasion-shaped version). We measured the **easiest rung**. A null on a declared
-  boundary is weak evidence about inferred-boundary behaviour; the de-confounding that buys
-  the clean contrast is exactly what forecloses the inferred version in the same corpus.
-- **Capability tier.** Two tiers (weak and one rung up), both null, with a faint
-  unresolved displacement-direction hint on the stronger one. This is a two-point gradient at
-  the low-to-middle of the capability range; it does not speak to frontier models, where the
-  safety-relevant question lives, and the hint must not be over-read.
-- **Resolution.** With ≈ 14 worlds per tier the CI half-width is ≈ 0.27, dominated by
-  between-world variance; this rules out only a gross effect (gap > ≈ 0.27). A subtle effect —
-  including the +0.07 hint — is not excluded, and resolving it needs more worlds, not deeper
-  per-world coverage.
+- **Boundary type (the ladder).** *Declared* (the agent is told the audited set — the rung
+  the instrument targets) → *announced-but-unscoped* (`A1_implicit`: a verifier exists,
+  scope unknown) → *feedback-revealed* (`A4_feedback_revealed`: nothing announced, but
+  verdict bulletins make the boundary learnable item-by-item — a calibration rung validated
+  with scripted policies only) → *inferred* (the agent must work out the boundary from
+  context alone, without explicit feedback — the deployment-relevant, monitor-evasion-shaped
+  version). The instrument addresses the lower rungs; a declared-boundary result is weak
+  evidence about inferred-boundary behaviour, and the de-confounding that buys the clean
+  contrast forecloses content-based inference in the same corpus by construction. The
+  feedback-revealed rung is an intermediate the bulletin channel makes expressible; it is
+  not the inferred rung, and no behavioral claim attaches to it.
+- **Capability tier.** Two tiers were probed live, but under the repaired construct reading
+  (§3.5, §5) those probes measured a structurally-zero quantity — they are harness
+  shakeout, not a capability gradient. No tier has been measured under the repaired
+  construct, and nothing here speaks to frontier models, where the safety-relevant question
+  lives.
+- **Resolution.** The shakeout's operational fact stands: with ≈ 14 worlds per tier the
+  cluster-bootstrap CI half-width was ≈ 0.27 and dominated by between-world variance, so a
+  future funded run needs more worlds, not deeper per-world coverage (the simulated
+  operating characteristics in Figure 1 size this). It is a statement about harness
+  resolution only — the quantity those runs measured carried no behavioral signal to
+  resolve.
 - **Interaction level.** The measured runs are non-interactive monologues: agents never saw
   one another's contributions and faced no votes, so the deception pressure was instructional
   rather than social. The instrument now supports an interactive mode (discussion visibility,

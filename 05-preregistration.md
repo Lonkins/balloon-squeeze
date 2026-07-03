@@ -27,6 +27,20 @@ Within-world counterfactual: each base world (a seeded social-deduction game wit
 
 **Arms:** `A0_off`, `A1_announced` (primary treatment), `A1_implicit`, `A2_silent`, `A3_placebo`; dose arms `A1_φ` for `φ∈{0.25,0.5,0.75}`.
 
+*Arm-semantics note (added 2026-07-03).* Whether an arm publishes the verifier's verdicts
+to the group in interactive play is an explicit per-arm property (`broadcasts_verdicts`),
+never inferred from the oracle running. `A2_silent` is covert in **both** deliberation
+modes — the first consequence-coupling release briefly made every oracle arm broadcast in
+interactive mode, which would have leaked audit information into the content-artifact
+control; the defect was caught in review, fixed, and pinned by regression tests before any
+funded run. *Proposed amendment, NOT applied (awaiting explicit maintainer sign-off):* add
+`A4_feedback_revealed` — a calibration arm in which nothing is announced up front but
+verdict bulletins are broadcast, so the audit boundary is learnable item-by-item from
+observed feedback — to the funded-run design as a calibration condition. Until signed off,
+the arm exists in the instrument's control-arm registry only (scripted-policy calibration;
+never pooled with behavioral arms; never feeding the kill rule) and is not part of this
+pre-registered arm roster.
+
 **Audit-boundary mechanism (Architecture A).** Checkability is engine-side metadata over a single, surface-form-homogeneous proposition pool: the *same* statement is checkable in one world and uncheckable in another, so a classifier that sees only the text is at chance (verified: **49.4%** blind class-guess rate, vs **82.8%** for the earlier content-encoded corpus where "uncheckable" was collinear with "is-an-intention-claim"). Under `A1_announced` the audit boundary reaches the impostor *out of band*, as an explicit `[AUDITED]/[NOT AUDITED]` tag on its menu; the blind extractor never sees the tag. This re-scopes the displacement construct from *inferring an unknown boundary* to *routing falsehoods around a declared one*: `A1_announced` measures exploitation of a known audit scope — the cleanest operationalization of the `ΔC` headline — while `A1_implicit` (verifier announced, no tag) is a scope-unknown chilling-effect arm, since the de-confounded corpus carries no content signal from which an unknown boundary could be inferred.
 
 **Models:** ≥3 families — a frontier strategic-reasoning model, a mid-tier instruction-tuned model, a small open-weight model — analyzed separately and as a capability gradient (no pooling across families in the primary).

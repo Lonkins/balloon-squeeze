@@ -196,7 +196,7 @@ def run_game(
                     proposition=verdict.proposition_id,
                     correct=verdict.correct,
                 )
-            if cfg.interactive and round_verdicts:
+            if cfg.interactive and round_verdicts and arm.broadcasts_verdicts:
                 # Consequence coupling: the verifier's verdicts are announced to the
                 # group before the vote. The bulletin joins the shared history (visible
                 # to every later speaker and voter) but is never extracted or scored.

@@ -106,11 +106,15 @@ construction.
 
 ## Remaining gates
 
-Everything buildable without real-model spend is built: the de-confounded instrument with
-monologue **and** interactive deliberation modes, default-on run records with a committed
-example gallery, the offline replay renderer with a video path, the two standalone kits, and
-the workshop-paper draft. What remains is exactly this list — each item needs money or a
-maintainer decision, nothing else is open:
+Everything currently known to be buildable without real-model spend is built: the
+de-confounded, truth-briefed instrument with monologue **and** interactive deliberation
+modes, per-arm-gated verifier bulletins (a gating defect in the first consequence-coupling
+release made `A2_silent` broadcast in interactive mode; it was caught in review, fixed,
+and pinned), default-on run records with a committed example gallery, the offline replay
+renderer with a video path, the calibration arms including the feedback-revealed-boundary
+arm, the two standalone kits, and the workshop-paper draft. The list below is what remains
+as of this writing — each item needs money or a maintainer decision (review keeps finding
+in-repo work; this list is the standing gate set, not a claim that no defect will surface):
 
 1. **Funded re-probe under the repaired construct.** The first real-model measurement in
    which the impostor can actually lie (truth-briefed, consequence-coupled,

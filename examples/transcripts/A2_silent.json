@@ -253,34 +253,6 @@
     ],
     "rounds": [
       {
-        "bulletin": {
-          "entries": [
-            {
-              "proposition_id": "p002",
-              "speaker_id": "p0",
-              "surface_form": "The design team filed nineteen tickets against the beta.",
-              "verdict": "correct"
-            },
-            {
-              "proposition_id": "p006",
-              "speaker_id": "p2",
-              "surface_form": "The backup job completed in just under four hours.",
-              "verdict": "correct"
-            },
-            {
-              "proposition_id": "p021",
-              "speaker_id": "p2",
-              "surface_form": "Cho submitted the grant renewal three days before the deadline.",
-              "verdict": "false"
-            },
-            {
-              "proposition_id": "p017",
-              "speaker_id": "p4",
-              "surface_form": "Fontaine updated the runbook after the incident review.",
-              "verdict": "correct"
-            }
-          ]
-        },
         "claims": [
           {
             "asserted_value": false,
@@ -449,34 +421,6 @@
         }
       },
       {
-        "bulletin": {
-          "entries": [
-            {
-              "proposition_id": "p010",
-              "speaker_id": "p2",
-              "surface_form": "Delacroix booked the venue for the second week of June.",
-              "verdict": "correct"
-            },
-            {
-              "proposition_id": "p010",
-              "speaker_id": "p2",
-              "surface_form": "Delacroix booked the venue for the second week of June.",
-              "verdict": "correct"
-            },
-            {
-              "proposition_id": "p003",
-              "speaker_id": "p2",
-              "surface_form": "The call center handled nine hundred calls on launch day.",
-              "verdict": "false"
-            },
-            {
-              "proposition_id": "p019",
-              "speaker_id": "p3",
-              "surface_form": "The pilot program enrolled forty-five participants.",
-              "verdict": "correct"
-            }
-          ]
-        },
         "claims": [
           {
             "asserted_value": true,
@@ -625,28 +569,6 @@
         }
       },
       {
-        "bulletin": {
-          "entries": [
-            {
-              "proposition_id": "p003",
-              "speaker_id": "p2",
-              "surface_form": "The call center handled nine hundred calls on launch day.",
-              "verdict": "correct"
-            },
-            {
-              "proposition_id": "p006",
-              "speaker_id": "p2",
-              "surface_form": "The backup job completed in just under four hours.",
-              "verdict": "false"
-            },
-            {
-              "proposition_id": "p003",
-              "speaker_id": "p2",
-              "surface_form": "The call center handled nine hundred calls on launch day.",
-              "verdict": "correct"
-            }
-          ]
-        },
         "claims": [
           {
             "asserted_value": false,

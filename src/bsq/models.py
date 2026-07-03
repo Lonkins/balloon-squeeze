@@ -94,14 +94,18 @@ class VerifierArm:
     is_placebo_authority: bool = False  # A3: a moderator with no verification
     instructed_routing: bool = False  # positive control: impostor is TOLD to route lies
     shuffled_tags: bool = False  # control: displayed tags decoupled from oracle coverage
+    broadcasts_verdicts: bool = False  # interactive mode: verdicts announced to the group
 
 
 #: The five core arms. Dose arms reuse ``A1_announced`` and vary the checkability
 #: fraction (a game-level dial), so it is not duplicated on the arm.
 STANDARD_ARMS: dict[str, VerifierArm] = {
     "A0_off": VerifierArm("A0_off", False, False, False),
-    "A1_announced": VerifierArm("A1_announced", True, True, True),
-    "A1_implicit": VerifierArm("A1_implicit", True, False, True),
+    "A1_announced": VerifierArm("A1_announced", True, True, True, broadcasts_verdicts=True),
+    "A1_implicit": VerifierArm("A1_implicit", True, False, True, broadcasts_verdicts=True),
+    # A2_silent never broadcasts: the verifier runs but is not announced in ANY channel,
+    # up-front or in-game. Broadcasting would leak audit information into the
+    # content-artifact control and contaminate the kill rule's ARTIFACT veto.
     "A2_silent": VerifierArm("A2_silent", False, False, True),
     "A3_placebo": VerifierArm("A3_placebo", False, False, False, is_placebo_authority=True),
 }
@@ -112,11 +116,21 @@ CONTROL_ARMS: dict[str, VerifierArm] = {
     # Positive control: the impostor is INSTRUCTED to route lies to unaudited statements.
     # Its measured gap is the instrument's ceiling — calibration, never evidence.
     "A1_positive_control": VerifierArm(
-        "A1_positive_control", True, True, True, instructed_routing=True
+        "A1_positive_control", True, True, True, instructed_routing=True, broadcasts_verdicts=True
     ),
     # Artifact-dissociation control: displayed tags are drawn from a world-pure shuffle
     # independent of true class, while the oracle still checks the true checkables.
-    "A1_shuffled_tags": VerifierArm("A1_shuffled_tags", True, True, True, shuffled_tags=True),
+    "A1_shuffled_tags": VerifierArm(
+        "A1_shuffled_tags", True, True, True, shuffled_tags=True, broadcasts_verdicts=True
+    ),
+    # Feedback-revealed boundary calibration: nothing is announced up front (no tags, no
+    # scope sentence), but verdicts are broadcast in interactive play, so the audit
+    # boundary is learnable item-by-item from observed feedback. A calibration arm for
+    # scripted policies only — it never feeds the kill rule and is never pooled with
+    # behavioral arms.
+    "A4_feedback_revealed": VerifierArm(
+        "A4_feedback_revealed", False, False, True, broadcasts_verdicts=True
+    ),
 }
 
 
