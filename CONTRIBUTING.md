@@ -86,9 +86,11 @@ keeps a result *interpretable*: blind scoring to arm, pre-register before the
 confirmatory run, report the null, and cite the closest prior work accurately. See
 [05-preregistration.md](05-preregistration.md).
 
-The first probe is a two-tier **null**. Report it as a calibrated upper bound on
-displacement, never as evidence that displacement exists — a PR that phrases a null as a
-positive existence claim will be sent back.
+The historical live probes measured a **structurally-zero quantity** (the pre-repair
+construct had no truth channel; see the paper §3.5) and are documented as harness
+shakeout — never cite them as behavioral evidence of anything, in either direction. More
+generally: a PR that phrases a null as a positive existence claim, or that quietly
+weakens a retraction, will be sent back.
 
 ## Housekeeping
 

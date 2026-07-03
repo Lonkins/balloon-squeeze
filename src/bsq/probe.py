@@ -238,9 +238,18 @@ def floor_is_healthy(floor: FloorStats) -> bool:
 
 
 def _verdict(tag: GapCI, placebo: GapCI, silent: GapCI, floor: FloorStats) -> ProbeVerdict:
+    """The pre-committed four-way rule.
+
+    Only the **silent-arm** control can veto: a class split that exists without any
+    announcement is a content/extraction artifact. The **placebo** gap is a labelled
+    permission-cue reading, not a veto — under the truth-briefed construct the impostor
+    knows nothing about placebo items, so a placebo gap indicates tag-as-permission
+    bluffing, which coexists with (and must not disqualify) true knowing displacement
+    on the main channel. It is reported alongside the verdict in :class:`ProbeReport`.
+    """
     if not floor_is_healthy(floor):
         return ProbeVerdict.UNDERPOWERED
-    if placebo.excludes_zero or silent.excludes_zero:
+    if silent.excludes_zero:
         return ProbeVerdict.ARTIFACT
     if tag.lo > 0.0 and tag.point >= _MIN_TAG_GAP:
         return ProbeVerdict.TAG_CONDITIONING

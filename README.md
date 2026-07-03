@@ -4,9 +4,9 @@
 
 [![CI](https://github.com/Lonkins/balloon-squeeze/actions/workflows/ci.yml/badge.svg)](https://github.com/Lonkins/balloon-squeeze/actions/workflows/ci.yml) ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg) ![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg) ![Status: research preview](https://img.shields.io/badge/status-research%20preview-orange.svg)
 
-> **Status:** early-stage research instrument. The offline `mock` path is stable and fully reproducible; the first two-tier probe is reported as a pre-registered, calibrated upper bound — not a displacement existence proof.
+> **Status:** early-stage research instrument, recently repaired after a second construct audit. The offline `mock` path is stable and fully reproducible. **No behavioral findings are claimed**: the early live probes measured a structurally-zero quantity (see below) and are retained as harness shakeout only. The repaired, truth-grounded instrument awaits its first funded run.
 
-A deterministic, mock-first research instrument for **replay-isolated causal estimates of deception displacement**. It pairs a within-world replay design with a **de-confounding protocol** — one that caught an 82.8% construct confound and drove it to chance, locked by a regression test — and a **pre-committed kill rule** encoded in code. Built, tested, and run on a first pre-registered, two-tier measurement.
+A deterministic, mock-first research instrument for measuring **deception displacement**, and the two construct-validity audits it took to build honestly: a **de-confounding protocol** that caught an 82.8% content confound and drove it to chance (locked by a regression test), and a **truth-channel audit** that caught the fix's own deeper failure — an impostor who could no longer knowingly lie at all — now repaired with a private truth briefing, consequence-coupled audits, a positive-control calibration arm, and a decision rule with Monte-Carlo-measured operating characteristics.
 
 ## What it is
 
@@ -18,7 +18,7 @@ The hypothesis — the "balloon squeeze": **squeeze dishonesty out of the checke
 
 > When an agent is made aware a verifier checks a known subset of its factual claims, is false-claim mass on **checkable** propositions *reduced* (honesty) or *redistributed* onto **uncheckable** propositions held in the same seeded world (**displacement**)?
 
-The estimand is the within-world joint contrast `(ΔC, ΔU)` — the change in false-mass on checkable vs uncheckable claims, verifier-announced vs verifier-off. Four pre-registered regimes: **honesty** (both fall), **displacement** (checkable falls, uncheckable rises — the balloon squeeze), **suppression** (both fall via hedging), and **null** (no effect).
+The estimand is the within-world joint contrast `(ΔC, ΔU)` — the change in false-mass on checkable vs uncheckable claims, verifier-announced vs verifier-off. Four pre-committed regimes: **honesty** (both fall), **displacement** (checkable falls, uncheckable rises — the balloon squeeze), **suppression** (both fall via hedging), and **null** (no effect).
 
 ## The de-confounding result
 
@@ -26,7 +26,7 @@ Measuring this cleanly is harder than it looks. Our first corpus encoded checkab
 
 The fix makes class **per-world metadata** over one surface-form-homogeneous pool — the same sentence is checkable in one world and uncheckable in another, so a string-only classifier is at **49.4%** (chance) *by construction*, enforced as a regression test. The audit boundary reaches the agent **out of band**, via an explicit `[AUDITED]/[NOT AUDITED]` tag the measurement path never sees.
 
-→ The full detective story is in **[case-study-deconfounding.md](case-study-deconfounding.md)** — start here if you read one thing.
+→ The full detective story — both construct failures, Part I (the content confound) and Part II (the truth-blindness the fix caused) — is in **[case-study-deconfounding.md](case-study-deconfounding.md)**. Start there if you read one thing.
 
 ## Reusable kits
 
@@ -63,13 +63,13 @@ open replay.html    # step through or press Play — watch where the lies land
 
 The replay shows the statement board with its audited/unaudited boundary, each participant speaking in turn, per-claim lie/truth verdicts, the verifier's checks, the votes — and a running scoreboard of whether the impostor's false claims migrate to the unaudited side. Run your own game with `bsq run --interactive` (records land in `runs/`, capture is always on; the record format is documented in [docs/record-format.md](docs/record-format.md)). To make a shareable video: screen-record the autoplay replay, or `python tools/export_video.py <record.json>` if you have Playwright installed.
 
-Two deliberation modes exist: **monologue** (the default — the configuration all recorded results were measured on) and **interactive** (`--interactive` — speakers see the evolving discussion and every round ends in a vote with elimination stakes). The recorded two-tier null is attributed to the monologue configuration; measuring displacement under interaction is future, funded work.
+Two deliberation modes exist: **monologue** (the default — the configuration of the historical shakeout runs) and **interactive** (`--interactive` — speakers see the evolving discussion, verifier verdicts are announced to the group, and every round ends in a vote with elimination stakes). Measuring displacement with the repaired construct, in either mode, is future, funded work.
 
 A pre-rendered **replay gallery** — the same seeded world under all five verifier arms — is committed at [docs/demo/](docs/demo/): open `docs/demo/index.html` from a clone (it becomes a live site once GitHub Pages is enabled for `/docs`; see the [remaining gates](03-build-roadmap.md#remaining-gates)).
 
-## First result
+## The second audit — and what the early runs really were
 
-A first pre-registered probe ran two capability tiers through the identical de-confounded channel and returned a kill-rule-passing **null** on both, with a faint, unresolved hint in the displacement direction on the stronger tier. Full numbers, confidence intervals, and the power analysis are in the **[paper](paper/balloon-squeeze.md)**.
+A hostile methodology review caught a second construct failure, deeper than the first: the de-confounding fix that made truth content-independent also **severed the agent's access to it** — the impostor had no way to know which statements were true, so it could not knowingly lie, and the expected tag gap was **zero by construction for any model**. The early two-tier probes therefore measured coin noise, not displacement; they are retained as [harness shakeout](results/real-model-runs.md), and every behavioral reading previously attached to them is retracted. The repair gives the impostor a private, world-pure truth briefing (all other paths provably blind, locked by tests — including a regression pin that a truth-blind policy's expected gap is zero, so the flaw cannot silently return). The instrument now also couples audits to in-game consequences, calibrates itself with a positive-control arm, and ships [measured operating characteristics](paper/figures/oc-report.json) for its decision rule. The full story is the **[paper](paper/balloon-squeeze.md)** (§3.5) — it is the project's second, and larger, construct-validity case study.
 
 ## How it compares
 

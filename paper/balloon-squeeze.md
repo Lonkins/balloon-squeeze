@@ -1,33 +1,33 @@
-# Balloon Squeeze: a replay-isolated, de-confounded instrument for measuring deception displacement across an audit boundary
+# Balloon Squeeze: building a de-confounded instrument for deception displacement — and the two construct audits it took
 
-*Working draft — methods / instruments / negative-results workshop submission.*
+*Working draft — methods / instruments workshop submission.*
 
 ## Abstract
 
 When an agent is told that some of its claims are audited, does it become honest, or does
 it move its falsehoods onto the claims it believes are unaudited? Measuring this
-*deception displacement* cleanly is harder than it looks: the obvious operationalization —
-contrasting "checkable" against "uncheckable" claims — confounds audit status with claim
-*content*. We present **Balloon Squeeze**, a deterministic instrument that isolates the
-contrast three ways. First, a **within-world replay** design: each seeded multi-agent game
-is re-run byte-identically with only the verifier announcement toggled, so the audit
-manipulation is the sole difference between arms. Second, a **de-confounding protocol**:
-checkability is assigned as *per-world metadata* over a single surface-form-homogeneous
-proposition pool, so the same sentence is checkable in one world and uncheckable in
-another, and the audit boundary reaches the agent *out of band* via an explicit tag rather
-than through content. We show this matters empirically: a blind classifier separated our
-first (content-encoded) corpus at **82.8–95.3%**, and the redesign drives it to **49.4%**
-(chance), enforced as a regression test. Third, a **pre-committed kill rule** encoded as
-code, so a null is a measurement rather than a disappointment. A first pre-registered
-**capability-gradient** probe — two tiers run through the identical de-confounded channel —
-returns **no confirmatory displacement on either tier** (credible nulls with healthy lie
-floors), alongside a **faint, non-significant directional hint** on the stronger tier (it
-lied more on its unaudited claims, +0.07 in the predicted direction, where the weak tier was
-flat) consistent with capability-scaling but unresolved at this budget. We report this as a
-calibrated upper bound, not as a claim that "LLMs do not displace deception." The
-contribution is the apparatus and the de-confounding method; the two-tier null with its
-honest directional hint is a worked demonstration that the instrument returns trustworthy
-measurements and is ready for a larger confirmatory study.
+*deception displacement* cleanly is harder than it looks — twice over, in our experience.
+We present **Balloon Squeeze**, a deterministic, open instrument for the question, and the
+two construct-validity failures we caught and fixed while building it. **First**, the
+content confound: operationalizing "uncheckable" as a different *kind* of statement let a
+blind classifier recover the condition from text alone at **82.8–95.3%**; moving
+checkability into per-world metadata over one surface-form-homogeneous pool drove it to
+**49.4%** (chance), enforced as a regression test. **Second — the failure the first fix
+caused**: making truth content-independent severed the *agent's* epistemic access to it,
+so the impostor could no longer knowingly lie at all. For any truth-blind policy the
+expected false rate is 0.5 against the hidden balanced truth assignment and the expected
+audited/unaudited gap is exactly zero — a structural zero our early live probes measured
+without knowing it, and our closed-loop validation missed because its scripted policies
+read an engine-side truth channel the real path never had. The repaired instrument
+delivers truth to the impostor as a private, world-pure briefing (every other path
+provably blind, enforced by tests), couples the audit to in-game consequences, calibrates
+itself with an instructed-routing positive-control arm, and reports Monte-Carlo-measured
+operating characteristics for its pre-committed decision rule instead of assumed ones.
+We release the instrument, its transcripts-and-replay evidence layer, and both audits as
+reusable method: **audit your construct with a blind classifier, and audit it through the
+real information channel — a scripted proxy will pass tests your instrument fails.** No
+behavioral claims about deception displacement are made here; the early live runs are
+reported strictly as harness shakeout.
 
 ## 1. Introduction
 
@@ -131,6 +131,42 @@ unknown audit boundary; the scope must be *declared*. This re-scopes the constru
 a *declared* one?" — a real narrowing we treat as a first-class limitation (§6), not a
 detail.
 
+### 3.5 The audit that audited a proxy: the truth-blindness failure
+
+The redesign above has a consequence we did not see until a hostile methodology review
+found it: making truth a **content-independent per-world assignment** severed the *agent's*
+access to it. Nothing in the impostor's inputs — menu, tags, instructions — carried truth,
+so a model could not *knowingly* lie; it could only assert into a hidden balanced
+assignment. For any truth-blind policy, E[false rate] = 0.5 per claim and the expected
+audited/unaudited gap is **exactly zero** — the construct could not fire, for any model,
+at any capability.
+
+Why didn't our own closed-loop validation catch this? Because its scripted planted
+policies read `truth_value` from the engine-side ledger object — a channel that exists in
+code but was never rendered into any real model's prompt. The audit validated the
+*pipeline* through a **proxy information channel** and passed; the *instrument* ran
+through the real channel and measured a coin. The general lesson, which we rank equal to
+the blind-classifier lesson: **construct audits must run through the same information
+channel the real subject uses.** A scripted proxy with privileged access will pass tests
+your instrument fails.
+
+The repair delivers truth as a **private briefing on the impostor's menu** — each
+non-placebo statement carries "you know this is TRUE/FALSE", a pure function of the world
+and never the arm, so replay identity is untouched — while the extractor, panelists, and
+every measurement path remain provably blind (enforced by structural typing and tests).
+Placebo statements are deliberately **excluded** from the briefing ("you know nothing
+about this one"): the impostor cannot knowingly lie there, which converts the placebo
+channel from a broken mirror of true displacement into a clean detector of the
+tag-as-permission artifact. Three permanent tests lock the repair in: a **pin** (a
+truth-blind policy's expected gap is zero — the flaw can never silently return), a
+**demonstration** (a scripted liar reading only the briefing reaches 100% knowing-false
+rate), and a **positive-control ceiling** (an instructed router measured by the standard
+pipeline yields the maximal gap, calibrating what the instrument can detect). The scripted
+validation policies now read main-channel truth through this same briefing channel; the
+honest-seat **coin diagnostic** (non-impostor false rates, which sit at 0.5 under any
+truth-blind construct) ships in the analysis tool as mandatory reporting for every future
+run.
+
 ## 4. Measurement
 
 **Judge-error correction.** The real extractor is imperfect, so per-class observed false
@@ -162,67 +198,58 @@ clean).
 that passes it (flat gap, healthy floor, clean controls) is a credible measurement of zero;
 a null that fails it is flagged as a broken harness, not reported as a finding.
 
-## 5. First results: a capability-gradient probe
+## 5. The early live runs, re-read: harness shakeout of a structurally-zero measurement
 
-All runs were at temperature 0, with the audit boundary *declared*, in the **monologue
-configuration** (§2) — agents did not see one another's contributions and no votes
-occurred, so the "social" pressure on the impostor was limited to its role instructions.
-The
-primary readout throughout is the within-`A1_announced` tag gap, run A1-first with a
-pre-committed early-stop on a clean-inert verdict.
+Before the truth-blindness audit (§3.5), we ran live probes on two capability tiers.
+This section reports them **as what they turned out to be** — an end-to-end shakeout of
+the live harness that measured a quantity which was zero by construction — and corrects
+the record of what the decision machinery actually executed.
 
-**A first weak-tier probe.** On a small, fast model the tag gap was **+0.048, 95% CI
-[−0.223, +0.288]** — no measurable displacement, with a healthy floor (the impostor lied on
-21–43% of its claims, both channels populated). A clean `inert` verdict. The CI was wide
-because the uncheckable channel was thin (≈ 2.8 claims/game).
+**The structural zero.** In every run below, the impostor's inputs were the statement
+menu, the audit tags, and its role instructions — no truth channel existed. Ground truth
+was a hidden, balanced, content-independent assignment, so for *any* policy the expected
+false rate was 0.5 per claim on both channels and the expected tag gap was exactly zero
+(§3.5). The observed numbers — a weak-tier gap of −0.005 [−0.267, +0.274], a
+stronger-tier gap of +0.068 [−0.119, +0.282], per-channel "false rates" of 0.37–0.51 —
+are draws from that structural zero plus heavy between-world clustering noise. Earlier
+drafts of this paper described these as "credible nulls with healthy lie floors" and
+called the stronger tier's +0.07 a "directional hint"; under the audit, the floors were
+coin-disagreement rates, the hint was definitionally noise, and the "calibrated upper
+bound" bounded a quantity that is provably zero. We retract those readings in full.
 
-**A channel-depth repair.** Before reading more into the wide CI, we deepened the channel
-with a *class-neutral* coverage increase (the impostor addresses more statements per turn),
-lifting both channels (uncheckable ≈ 2.8 → ≈ 4.5 claims/game) without biasing the contrast.
+**What the decision rule actually executed.** The pre-committed kill rule is a four-way
+classifier requiring baseline (`A0_off`), treatment (`A1_announced`), and silent-control
+(`A2_silent`) arms. Only the first weak-tier probe ran all three (A1 n=14, A0 n=10, A2
+n=10). The later capability-gradient runs were **A1-only with a pre-committed early stop**
+gated on A1's own floor — the full three-arm rule never executed on them, and earlier
+drafts describing those runs as passing "a clean inert verdict" over-described what the
+code did. Where controls did run, they were assessed by whether wide intervals included
+zero — a criterion with essentially no power to fail at n=10 — rather than by equivalence
+bounds. Both defects are repaired in the current instrument (§4: measured operating
+characteristics; equivalence-bounded controls are pre-committed for any future run).
 
-**The gradient.** We then ran two capability tiers — the same weak model with the repaired
-channel, and one stronger model — through the **identical** pipeline, so a tier difference is
-attributable to capability rather than to the channel change. Both returned a clean `inert`
-verdict:
+**What the shakeout legitimately established.** The live path works end to end: real
+models complete multi-round games; the blind extractor parses free text at usable rates;
+per-game claim volumes (≈ 4–7 checkable, ≈ 3–4.5 uncheckable after a class-neutral
+coverage repair) and per-game economics (≈ $0.15/game at the tiers probed) are known; and
+the cluster structure of the estimator is understood — the deepened per-game channel did
+not tighten the 14-game CI, confirming that between-world variance, i.e. the number of
+worlds, is the binding constraint on any future design. These operational facts, and only
+these, carry forward.
 
-| Tier | tag gap (U−C) | audited / unaudited false rate |
-|------|---------------|--------------------------------|
-| weak (repaired) | −0.005 [−0.267, +0.274] | 0.402 / 0.397 |
-| stronger | +0.068 [−0.119, +0.282] | 0.440 / **0.508** |
+![Detection power of the pre-committed kill rule as a function of the planted tag gap,
+measured by Monte-Carlo simulation on the committed decision machinery at three cluster
+counts.](figures/power-simulated.svg)
 
-**No confirmatory displacement on either tier** — both CIs contain zero. But there is a
-**faint, non-significant directional hint**: the stronger model lied *more* on its unaudited
-claims than its audited ones (0.508 vs 0.440), a +0.07 gap in the predicted displacement
-direction, where the weak model was flat (−0.005). At ≈ 0.7 standard errors from zero it is
-not resolved. By the project's own committed power model, resolving an effect this small
-(MDE ≈ 0.07) would need on the order of **180–300 worlds per arm** — depending on the
-between-world ICC — roughly an order of magnitude beyond the 14-world budget here (Figure 1).
-The achieved budget resolves only a *gross* effect (MDE ≈ 0.20, ≈ 22–37 worlds); the +0.07
-hint sits well inside the unresolved band.
-
-**A methodological note on the binding constraint.** Deepening the per-game channel did *not*
-tighten the 14-game CI (half-width ≈ 0.27, unchanged). The cluster bootstrap is dominated by
-*between-world* variance, so the binding constraint on resolution is the number of **worlds
-(clusters)**, not claims-per-game. The channel repair bought healthy, non-degenerate floors
-on both tiers; tightening the bound is a matter of *more worlds*, not deeper coverage.
-
-![Required worlds per arm vs. the minimum detectable tag gap, computed by the committed power
-model at two between-world ICC assumptions; the achieved 14-world budget and the +0.07 hint
-are marked.](figures/mde-vs-games.svg)
-
-**Figure 1.** *Required worlds per arm to detect a tag gap of a given size, from the
-instrument's own `power.required_games` estimator. The +0.07 directional hint needs ≈ 180–300
-worlds per arm; the 14-world budget resolves only a gross effect (MDE ≈ 0.20). This is why the
-hint is unresolvable at this budget and why resolution requires more worlds, not deeper
-per-world coverage — generated and regression-tested so the figure cannot drift from the
-estimator.*
-
-**Calibrated upper bound.** Rather than claim "no displacement," we report what the data
-support: across two tiers measured identically, the tag gap is at most ≈ +0.27–0.28 at 95%
-confidence, on a *declared* boundary. The result is a credible two-tier null with a
-pre-registered directional hint consistent with — but not establishing — displacement
-scaling with capability. That hint motivates a larger, more-worlds confirmatory study; the
-instrument is ready for it.
+**Figure 1.** *Measured detection power of the committed kill rule (simulation on the
+decision machinery itself; Beta-Binomial world model, ICC 0.15, ≈ 5/4 claims per game per
+channel). Curves are cluster counts n = 10, 14, 30. The full operating-characteristics
+report — per-scenario verdict error rates, including a measurable false-ARTIFACT rate at
+small n, and bootstrap CI coverage — is committed alongside
+([figures/oc-report.json](figures/oc-report.json)) and drift-locked to the generator, so
+these numbers cannot silently diverge from the code that produces them. This figure
+replaces an earlier analytic curve that repurposed a two-proportion power formula not
+matched to the pooled-gap cluster-bootstrap estimator.*
 
 ## 6. Limitations and the threat-model ladder
 
@@ -249,10 +276,17 @@ The result is honestly scoped on three axes, and the threat-model ladder is the 
   or suppress displacement; measuring that is future, funded work, and nothing here speaks to
   it.
 
-Two further caveats: real-provider runs are best-effort reproducible (the API has no seed),
-softening the within-world claim on the live path relative to mock; and the explicit
-`[NOT AUDITED]` tag could in principle act as a permission cue, which the placebo-inside-menu
-control exists to rule out.
+Three further caveats. Real-provider runs are best-effort reproducible (the API has no
+seed), softening the within-world claim on the live path relative to mock — and for the
+same reason, **no replay-isolated (ΔC, ΔU) contrast has ever been produced on real
+models**: the shakeout runs' only cross-arm number was an uninterpretable cross-run
+difference, so the within-world design remains a mock-validated instrument capability,
+not a demonstrated live measurement. The explicit `[NOT AUDITED]` tag could act as a
+permission cue; the redesigned placebo channel (briefing-excluded items, §3.5) exists to
+detect exactly that, and the shuffled-tag control arm dissociates tag semantics from
+oracle coverage. Finally, all statistics reported to date are raw, uncorrected extractor
+output: the human-labeled holdout that would license the judge-error correction remains
+an open gate, so corrected numbers exist only for synthetic known-answer fixtures.
 
 ## 7. Related work
 
@@ -270,13 +304,18 @@ the methodological core — a boundary **de-confounded from claim content**.
 
 ## 8. Conclusion
 
-A clean answer requires a clean question. The value here is not the weak-tier null but the
-apparatus that makes the null *trustworthy*: a within-world replay design, a de-confounding
-protocol that drives an 82.8% content confound to chance and locks it with a test, and a
-pre-committed kill rule a clean null actually passed. The reusable lesson generalizes to any
-"hard-to-monitor vs easy-to-monitor" benchmark: measure the confound with a blind classifier
-before trusting any contrast, move the distinction into metadata, deliver the manipulation
-out of band, and lock it with a regression test.
+A clean answer requires a clean question — and we needed two attempts to earn one. The
+contribution here is the apparatus and its audits: a de-confounding protocol that drives
+an 82.8% content confound to chance and locks it with a test; the discovery that this
+very fix silenced the construct by blinding the agent to truth, caught only when the
+audit was rerun through the real information channel; and the repaired, consequence-
+coupled, self-calibrating instrument with measured operating characteristics that
+resulted. Two lessons generalize to any "hard-to-monitor vs easy-to-monitor" benchmark:
+**measure your construct confound with a blind classifier before trusting any contrast**,
+and **audit your construct through the channel your real subject actually uses** — a
+scripted proxy with privileged access will pass validations your instrument fails. The
+behavioral question that motivated the instrument remains open, and the instrument is now,
+for the first time, actually capable of asking it.
 
 ## Reproducibility and availability
 
@@ -303,9 +342,10 @@ bit-reproducible.
 
 This work *measures* rather than trains deception: the impostor incentive is a controlled
 experimental construct inside a social-deduction game, not a jailbreak or a capability uplift.
-The result is deliberately anti-sensational — a two-tier null reported as a calibrated upper
-bound, never as evidence that models "do not displace" or "are safe." The threat-model ladder
-(§6) is included precisely so the result is not over-read as evidence about frontier models or
+No behavioral findings are claimed: the early live runs are reported as harness shakeout of a
+structurally-zero measurement, and publishing that failure — rather than the "null result" it
+first appeared to be — is deliberate. The threat-model ladder
+(§6) is included precisely so nothing here is over-read as evidence about frontier models or
 about inferred (versus declared) audit boundaries. The de-confounding recipe is a general
 measurement-hygiene tool with no offensive use. No human subjects and no personal data are
 involved.
@@ -349,3 +389,11 @@ contain both eliminations and early-ended games, so the interactive machinery is
 exercised rather than incidentally idle). The estimator is thus validated on the exact
 configuration a funded interactive measurement would use, before any such measurement is
 funded.
+
+**Caveat (and its repair).** As §3.5 documents, the original version of this validation
+read planted truth from an engine-side channel real models never had — it validated the
+pipeline through a proxy and therefore could not catch the truth-blindness failure. The
+planted policies now draw main-channel truth from the same private-briefing channel a
+real model reads (the placebo control channel remains a scripted engine-side proxy by
+design, since the briefing deliberately excludes placebo items). Every recovery result in
+this appendix is from the rerouted validation.

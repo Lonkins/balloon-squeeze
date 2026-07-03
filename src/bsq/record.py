@@ -57,6 +57,8 @@ def build_game_payload(
     rounds_votes: Sequence[RoundVotes],
     ended_early: bool,
     impostor_seat: SeatScore,
+    bulletins: Mapping[int, list[dict[str, object]]] | None = None,
+    tag_comprehension: Mapping[str, object] | None = None,
 ) -> dict[str, Any]:
     """Assemble the deterministic ``game`` payload from engine-collected state.
 
@@ -134,17 +136,19 @@ def build_game_payload(
                 "votes": [{"voter_id": v.voter_id, "target_id": v.target_id} for v in rv.votes],
                 "eliminated": rv.eliminated,
             }
-        rounds.append(
-            {
-                "round_idx": round_idx,
-                "utterances": round_utterances,
-                "claims": round_claims,
-                "verifications": round_verifications,
-                "vote": vote_block,
-            }
-        )
+        round_entry: dict[str, Any] = {
+            "round_idx": round_idx,
+            "utterances": round_utterances,
+            "claims": round_claims,
+            "verifications": round_verifications,
+            "vote": vote_block,
+        }
+        if bulletins and round_idx in bulletins:
+            # Additive (v1): the verifier bulletin announced to the group before the vote.
+            round_entry["bulletin"] = {"entries": bulletins[round_idx]}
+        rounds.append(round_entry)
 
-    return {
+    payload: dict[str, Any] = {
         "setup": {
             "seed": seed,
             "arm": arm.name,
@@ -162,6 +166,10 @@ def build_game_payload(
         "ended_early": ended_early,
         "scores": _scores(impostor_seat),
     }
+    if tag_comprehension is not None:
+        # Additive (v1): the post-game manipulation check result.
+        payload["tag_comprehension"] = dict(tag_comprehension)
+    return payload
 
 
 def _claim_entry(claim: Claim, prop: Proposition) -> dict[str, Any]:

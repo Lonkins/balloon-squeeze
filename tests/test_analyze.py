@@ -267,3 +267,67 @@ def test_no_effect_set_reads_clean(tmp_path: Path) -> None:
     assert report.verdict.verdict is not ProbeVerdict.TAG_CONDITIONING
     a1_gap = report.groups[("A1_announced", False)].tag_gap
     assert a1_gap.lo <= 0.0 <= a1_gap.hi  # CI covers zero: clean null
+
+
+def test_coin_diagnostic_flags_truth_blind_honest_seats(tmp_path: Path) -> None:
+    """Truth-blind seats sit at the structural 0.5; truthful scripted seats sit at 0."""
+    import random as _random
+    from collections.abc import Sequence
+
+    from bsq.agents.policy import ABSTAIN, RoundContext
+    from bsq.models import Agent, Proposition, StructuredClaim, Utterance
+    from bsq.views import agent_menu_views
+
+    class _TruthBlindPanelist:
+        def act(
+            self,
+            *,
+            agent: Agent,
+            ledger: Sequence[Proposition],
+            round_idx: int,
+            rng: _random.Random,
+            ctx: RoundContext,
+        ) -> Utterance:
+            views = agent_menu_views(ledger, ctx.arm, world_seed=ctx.world_seed)
+            claims = tuple(
+                StructuredClaim(proposition_id=v.id, asserted_value=rng.random() < 0.5)
+                for v in views[:4]
+            )
+            return Utterance(speaker_id=agent.id, round_idx=round_idx, structured=claims)
+
+        def instruction_text(self, agent: Agent, ctx: RoundContext) -> str:
+            return "Truth-blind panelist (coin diagnostic demonstration)."
+
+        def vote(
+            self,
+            *,
+            agent: Agent,
+            living: object,
+            round_idx: int,
+            rng: object,
+            ctx: object,
+        ) -> str:
+            return ABSTAIN
+
+    blind_dir = tmp_path / "blind"
+    blind_dir.mkdir()
+    for seed in range(20):
+        cfg = GameConfig(n_topics=6, rounds=2, verifier_arm="A1_announced")
+        result = run_game(cfg, seed, panelist_policy=_TruthBlindPanelist())
+        write_record(finalize(result.record_game), default_record_path(cfg, seed, base=blind_dir))
+    blind_report = analyze_paths([blind_dir], seed=0)
+    honest = blind_report.groups[("A1_announced", False)].honest_seats
+    for cls in ("checkable", "uncheckable"):
+        false, total = honest[cls]
+        assert total > 50
+        assert abs(false / total - 0.5) < 0.08, f"truth-blind {cls} strays from the coin"
+
+    truthful_dir = _record_set(tmp_path, "A1_announced", list(range(5)), subdir="truthful")
+    truthful_report = analyze_paths([truthful_dir], seed=0)
+    honest_truthful = truthful_report.groups[("A1_announced", False)].honest_seats
+    total_false = sum(honest_truthful[c][0] for c in ("checkable", "uncheckable"))
+    assert total_false == 0  # scripted HonestPolicy never lies
+
+    parsed = json.loads(blind_report.to_json())
+    assert "honest_seats" in parsed["groups"][0]
+    assert "coin diagnostic" in blind_report.render_text()

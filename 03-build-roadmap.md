@@ -112,9 +112,12 @@ example gallery, the offline replay renderer with a video path, the two standalo
 the workshop-paper draft. What remains is exactly this list — each item needs money or a
 maintainer decision, nothing else is open:
 
-1. **Funded interactive re-run.** Real-model measurement under the interactive mode (and/or
-   the more-worlds run the power model sizes at ~180–300 worlds/arm to resolve the +0.07
-   hint). Cost driver: per-game model calls at confirmatory N.
+1. **Funded re-probe under the repaired construct.** The first real-model measurement in
+   which the impostor can actually lie (truth-briefed, consequence-coupled,
+   comprehension-checked, positive-control-calibrated; ~$10–50 at recorded per-game
+   economics for a shakeout-scale probe, more at confirmatory N sized by the committed
+   simulation-based power study). Cost driver: per-game model calls. Note: the earlier
+   "+0.07 hint" framing is retired — the pre-repair runs measured a structural zero.
 2. **Real human-labeled holdout.** The extractor gate on human gold labels (live extraction
    + labeling effort); until then the gate stands on the synthetic known-answer fixture.
 3. **Venue submission.** Choosing the workshop, the venue-format conversion, and the
