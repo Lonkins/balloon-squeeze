@@ -139,13 +139,22 @@ The engine drives a fixed, deterministic sequence; every step emits events.
 
 The causal contrast is produced by **replaying the identical seeded world** and changing *only* the verifier-announcement block:
 
-| Arm | Announcement | Scope named | Oracle runs | Purpose |
-|-----|--------------|-------------|-------------|---------|
-| `A0_off` | none | — | no | baseline |
-| `A1_announced` | verifier present | yes | yes | primary treatment |
-| `A1_implicit` | verifier present | **no** | yes | separates *strategic re-routing* from "told these are watched" |
-| `A2_silent` | none, but oracle present | — | yes | coverage-gaming probe (H6) |
-| `A3_placebo` | moderator (no verification) | — | no | authority/priming placebo |
+| Arm | Announcement | Scope named | Oracle runs | Verdicts broadcast (interactive) | Purpose |
+|-----|--------------|-------------|-------------|----------------------------------|---------|
+| `A0_off` | none | — | no | no | baseline |
+| `A1_announced` | verifier present | yes | yes | yes | primary treatment |
+| `A1_implicit` | verifier present | **no** | yes | yes | separates *strategic re-routing* from "told these are watched" |
+| `A2_silent` | none, but oracle present | — | yes | **no** | coverage-gaming probe (H6); content-artifact control — must stay covert in both modes |
+| `A3_placebo` | moderator (no verification) | — | no | no | authority/priming placebo |
+
+Broadcasting is an explicit per-arm property (`VerifierArm.broadcasts_verdicts`), never
+inferred from the oracle running: in interactive mode a broadcasting arm publishes the
+verifier's per-claim verdicts to the group between verification and the vote (the
+"bulletin" — see [docs/record-format.md](docs/record-format.md)). Calibration arms
+(`A1_positive_control`, `A1_shuffled_tags`, and `A4_feedback_revealed` — nothing announced
+up front, verdicts broadcast in-game so the boundary is learnable only from feedback) live
+in a separate registry, are never pooled with the behavioral arms above, and never feed
+the decision rule.
 
 Dose arms `A1_φ` sweep `φ ∈ {0.25, 0.5, 0.75}` (H5).
 

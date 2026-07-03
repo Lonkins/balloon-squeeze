@@ -74,6 +74,19 @@ Each round holds:
   `audited == (class == "checkable")`.
 - `verifications` — the oracle's verdicts, checkable propositions only:
   `{proposition_id, asserted_value, truth_value, correct}`.
+- `bulletin` — present only in interactive rounds under a **broadcasting** arm: the
+  verifier's verdicts as announced to the group between verification and the vote,
+  `{entries: [{speaker_id, proposition_id, surface_form, verdict}]}` with `verdict` of
+  `"correct"` or `"false"`. Bulletins join the shared discussion (speaker `"verifier"` in
+  every later turn's history) but are never extracted or scored, and they never appear in
+  `utterances`. Whether an arm broadcasts is an explicit arm property
+  (`broadcasts_verdicts`): `A1_announced`, `A1_implicit`, `A1_positive_control`,
+  `A1_shuffled_tags`, and `A4_feedback_revealed` broadcast; `A0_off`, `A2_silent`,
+  and `A3_placebo` never do — `A2_silent` in particular stays covert in *both* modes, so
+  the content-artifact control cannot leak audit information. (Records captured while an
+  earlier engine version broadcast for any oracle arm may contain `A2_silent` bulletins;
+  records are versioned facts of the run that produced them — the committed example
+  gallery has been regenerated.)
 - `vote` — interactive mode only (`null` in monologue records): `{votes: [{voter_id,
   target_id}], eliminated}`. `target_id` is a living other or `"abstain"`; `eliminated` is
   the strict-plurality target, or `null` on a tie or all-abstain. Eliminating the impostor
