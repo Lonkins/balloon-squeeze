@@ -200,3 +200,88 @@ def test_a4_bulletins_flow_and_analyze_groups_separately(tmp_path: object) -> No
         write_record(finalize(result.record_game), default_record_path(cfg, seed, base=out))
     report = analyze_paths([out], seed=0)
     assert set(report.groups) == {("A4_feedback_revealed", True)}
+
+
+def test_placebo_authority_announcement_reaches_prompts() -> None:
+    """A3's moderator announcement is delivered to every role — the arm is no longer
+    byte-identical to A0_off on the model path, and the record's setup.announcement
+    describes something the participants actually saw."""
+    from bsq.verifier import announcement_for
+
+    a3 = STANDARD_ARMS["A3_placebo"]
+    a0 = STANDARD_ARMS["A0_off"]
+    ledger = author_ledger(GameConfig(n_topics=8), 5)
+    for role in (Role.IMPOSTOR, Role.PANELIST):
+        agent = Agent(
+            id="p1", persona=Persona(id="x", name="Ash", blurb="b", voice="dry"),
+            role=role,
+        )
+        systems = {}
+        for arm in (a3, a0):
+            client = _RecordingLLM()
+            LLMPolicy(client).act(
+                agent=agent, ledger=ledger, round_idx=0, rng=random.Random(0),
+                ctx=RoundContext(arm=arm, announcement=announcement_for(arm), world_seed=5),
+            )
+            systems[arm.name], _ = client.prompts[-1]
+        assert "moderator is observing" in systems["A3_placebo"], role
+        assert "moderator is observing" not in systems["A0_off"]
+        assert systems["A3_placebo"] != systems["A0_off"], role
+
+
+def test_mode_plumbing_end_to_end_prompts_and_record_agree() -> None:
+    """The engine's interactive flag reaches act-time prompts AND the recorded
+    instruction — mutation-killing pin for the RoundContext plumbing."""
+    from bsq.record import finalize
+
+    sentence = "announced to the group"
+    for interactive in (True, False):
+        client = _RecordingLLM()
+        cfg = GameConfig(
+            n_topics=6, rounds=1, n_agents=3, verifier_arm="A1_announced",
+            interactive=interactive, eliminate_between_rounds=False,
+        )
+        result = run_game(cfg, 3, impostor_policy=LLMPolicy(client))
+        record = finalize(result.record_game)
+        instruction = next(
+            p["instruction"] for p in record["game"]["participants"]
+            if p["role"] == "impostor"
+        )
+        assert (sentence in instruction) is interactive
+        assert client.prompts, "the impostor never prompted"
+        for system, _ in client.prompts:
+            assert (sentence in system) is interactive
+
+
+def test_comprehension_scores_displayed_tags_under_shuffle() -> None:
+    """The comprehension score measures recall of the DISPLAYED tags: the instructed
+    router names exactly the shuffle-tagged statements and must score 1.0 (true-class
+    scoring would give ~0.5 under the shuffle)."""
+    from bsq.agents.mock import InstructedRouterPolicy
+    from bsq.record import finalize
+
+    cfg = GameConfig(
+        n_topics=6, rounds=1, n_agents=3, verifier_arm="A1_shuffled_tags",
+        comprehension_check=True,
+    )
+    result = run_game(cfg, 5, impostor_policy=InstructedRouterPolicy())
+    check = finalize(result.record_game)["game"]["tag_comprehension"]
+    assert check is not None and check["n_audited"] > 0
+    assert check["score"] == 1.0
+
+
+def test_replay_board_styles_by_displayed_tag() -> None:
+    """The replay board styles pills by the displayed tag, never by true class — a
+    shuffled-tags replay must not visually invert the boundary the agents saw."""
+    from bsq.record import finalize
+    from bsq.render import render_html
+
+    cfg = GameConfig(n_topics=6, rounds=1, n_agents=3, verifier_arm="A1_shuffled_tags")
+    record = finalize(run_game(cfg, 9).record_game)
+    html = render_html(record)
+    assert '<span class="tag audit">[NOT AUDITED]' not in html
+    assert '<span class="tag noaudit">[AUDITED]' not in html
+    # non-tagging arm: no boundary displayed, no audited border
+    cfg0 = GameConfig(n_topics=6, rounds=1, n_agents=3, verifier_arm="A2_silent")
+    html0 = render_html(finalize(run_game(cfg0, 9).record_game))
+    assert 'class="audited"' not in html0

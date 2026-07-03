@@ -48,6 +48,7 @@ from bsq.record import build_game_payload
 from bsq.rng import substream
 from bsq.scoring import ScoreReport, SeatScore, score_claims
 from bsq.verifier import Verification, announcement_for, verify_checkable
+from bsq.views import AUDITED, displayed_audit_tags
 
 #: A claim extractor: (utterance, ledger) -> claims. Default = the mock structured
 #: pass-through; the real path injects an LLM extractor (free text -> claims) here.
@@ -268,8 +269,13 @@ def run_game(
         ask = getattr(policies[impostor_id], "comprehension", None)
         if callable(ask):
             response = str(ask(agent=impostor_agent, ledger=ledger, ctx=check_ctx))
+            # Score recall of the DISPLAYED tags (the question asks about the marks on
+            # the list) — under a shuffled-tags arm that is the shuffle, not true class.
+            menu_tags = displayed_audit_tags(ledger, arm, world_seed=seed)
             audited_forms = [
-                p.surface_form for p in ledger if p.class_.value == "checkable"
+                p.surface_form
+                for p, tag in zip(ledger, menu_tags, strict=True)
+                if tag == AUDITED
             ]
             named = sum(1 for form in audited_forms if form.casefold() in response.casefold())
             tag_comprehension = {

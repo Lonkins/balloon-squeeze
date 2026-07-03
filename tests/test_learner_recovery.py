@@ -113,14 +113,18 @@ def test_naive_pooled_gap_shows_the_documented_dilution() -> None:
 
 
 def test_blindness_pin_no_bulletins_no_contrast() -> None:
-    """With bulletins stripped, the same inference has no signal: contrast ~ 0.
+    """Null-instrument calibration: a boundary-uninformed policy reads out as ~0.
 
-    The informed cells are reconstructed from the RUN RECORD's bulletins (which exist
-    regardless of what the policy chose to read), so the informed readout is defined for
-    the blind learner too — and must be ~0 with its CI covering 0, because the blind
-    policy routes by a class-balanced belief set. This is the strong pin: any
-    non-bulletin channel leaking the boundary would move this contrast off zero. The
-    naive pooled true-class gap must be ~0 for the same reason.
+    With bulletins stripped, the blind learner's learned-audited set is empty and every
+    asserted-earlier item gets the identical elevated lie rate, so its routing carries no
+    boundary information and the expected contrast is zero *by construction*. The
+    informed cells are reconstructed from the RUN RECORD's bulletins (which exist
+    regardless of what the policy read), so the readout is defined — and this test
+    checks the estimator correctly reports ~0 (CI covering 0) for such a policy. It is a
+    calibration of the readout's null, NOT a leak detector: it cannot detect a
+    hypothetical non-bulletin side channel, because this policy does not exploit one.
+    Channel-blindness is pinned structurally instead, by the view/prompt blindness
+    invariants in test_truth_channel.py.
     """
     from bsq.recovery import feedback_recovery
 
