@@ -20,6 +20,15 @@ ruff check src tests  # lint (matches CI)
 mypy src tests        # type-check, strict (matches CI)
 ```
 
+Two invariants get their own regression tests — if either fails, fix your change, not the
+test: `tests/test_monologue_golden.py` (the measured monologue configuration must stay
+byte-identical) and the gallery drift lock in `tests/test_record.py` (committed example
+transcripts must equal a fresh regeneration; after an *intentional* engine change,
+regenerate them with `python -c "from pathlib import Path; from bsq.gallery import
+write_example_gallery; write_example_gallery(Path('examples/transcripts'))"`). Every game
+run persists a run record by default (`runs/`, gitignored); render one with
+`bsq render <record.json>` to eyeball a change in context.
+
 ### Working on the kits
 
 The two packages under `packages/` (`noisyjudge`, `deconfound`) are standalone, each with its

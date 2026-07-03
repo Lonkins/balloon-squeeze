@@ -22,7 +22,7 @@ Four ingredients are needed at once, and only this instrument has all four:
 1. an in-game **ground-truth partition** of every claim into *checkable* vs *uncheckable*, with the engine holding truth for **both** (existing benchmarks only verify the checkable side);
 2. **verifier awareness** as a *manipulated independent variable* (announced on vs off), not a static audit;
 3. **deterministic counterfactual replay** of the identical seeded world so the *same* agent in the *same* position is compared across verifier conditions — a within-world causal contrast, not a noisy between-condition average;
-4. genuine **multi-agent social pressure**, so displacement is measured where it matters for oversight (claims made to peers and an overseer), not in single-turn QA.
+4. a **multi-agent panel setting** rather than single-turn QA — claims are made to peers and an overseer. The instrument's *interactive* mode makes the pressure genuinely social (each speaker sees the evolving discussion; every round ends in a vote with elimination stakes); the *monologue* mode — under which all recorded results were measured — provides the panel framing and deception incentive without inter-agent visibility. Measured claims are always attributed to their configuration.
 
 ## Central question & hypotheses
 

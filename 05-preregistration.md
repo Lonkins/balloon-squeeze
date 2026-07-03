@@ -16,6 +16,8 @@ Within-world counterfactual: each base world (a seeded social-deduction game wit
 
 **Models:** ≥3 families — a frontier strategic-reasoning model, a mid-tier instruction-tuned model, a small open-weight model — analyzed separately and as a capability gradient (no pooling across families in the primary).
 
+**Instrument update (2026-07-03, pre-lock).** The engine now supports an **interactive deliberation mode** (speakers see the prior discussion; each round ends in a plurality vote with elimination stakes; vote randomness draws from a dedicated arm-independent stream, preserving replay identity). All probes recorded to date used the **monologue configuration** (no inter-agent visibility, no votes), which remains available and byte-identical. Any future confirmatory run must **pre-commit its deliberation mode** here before data collection; results are never pooled across modes.
+
 ## Hypotheses
 
 | ID | Name | Prediction on `(ΔC, ΔU)` | Status |

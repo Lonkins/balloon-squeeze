@@ -21,10 +21,12 @@ import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from enum import StrEnum
+from pathlib import Path
 
 from bsq.agents.policy import Policy
 from bsq.engine import Extractor, run_game
 from bsq.models import GameConfig, PropositionClass
+from bsq.record import default_record_path, finalize, write_record
 from bsq.rng import substream
 
 _C = PropositionClass.CHECKABLE
@@ -97,16 +99,24 @@ def collect_arm(
     impostor_policy: Policy | None = None,
     panelist_policy: Policy | None = None,
     extractor: Extractor | None = None,
+    record_dir: Path | None = Path("runs"),
+    model_label: str = "offline-mock",
 ) -> list[GameRecord]:
     """Run ``n_games`` on one arm; per game, count the impostor's false claims per class and
-    channel. A game that raises (e.g. a transient provider error) is skipped, not fatal."""
+    channel. A game that raises (e.g. a transient provider error) is skipped, not fatal.
+
+    Every completed game's full run record is persisted to ``record_dir`` by default —
+    capture is default-on so a paid run can never silently lose its evidence. Pass a
+    generic ``model_label`` (never a model tier name) for committed artifacts.
+    """
     if n_games <= 0:
         raise ValueError("n_games must be positive")
     records: list[GameRecord] = []
     for game in range(n_games):
+        arm_cfg = replace(cfg, verifier_arm=arm)
         try:
             result = run_game(
-                replace(cfg, verifier_arm=arm),
+                arm_cfg,
                 base_seed + game,
                 impostor_policy=impostor_policy,
                 panelist_policy=panelist_policy,
@@ -114,6 +124,11 @@ def collect_arm(
             )
         except Exception:
             continue
+        if record_dir is not None:
+            write_record(
+                finalize(result.record_game, model_label=model_label),
+                default_record_path(arm_cfg, base_seed + game, base=record_dir),
+            )
         by_id = {p.id: p for p in result.game.proposition_ledger}
         main = {cls: [0, 0] for cls in PropositionClass}
         placebo = {cls: [0, 0] for cls in PropositionClass}

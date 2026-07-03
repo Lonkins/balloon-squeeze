@@ -49,6 +49,19 @@ pytest tests/test_corpus.py -k blind_class_guess    # the de-confounding gate, a
 
 Every offline claim is reproducible this way — replay determinism, the de-confounding gate, the judge-error-corrected closed-loop recovery, and the power model. Real-model probe results are recorded in [results/real-model-runs.md](results/real-model-runs.md) and the [paper](paper/balloon-squeeze.md).
 
+## Watch a game
+
+Every run produces a complete **run record** (world, hidden truth, every utterance, every claim scored, votes, eliminations — see [examples/transcripts/](examples/transcripts/)), and any record renders to a self-contained offline replay:
+
+```sh
+bsq render examples/transcripts/A1_announced.json -o replay.html
+open replay.html    # step through or press Play — watch where the lies land
+```
+
+The replay shows the statement board with its audited/unaudited boundary, each participant speaking in turn, per-claim lie/truth verdicts, the verifier's checks, the votes — and a running scoreboard of whether the impostor's false claims migrate to the unaudited side. Run your own game with `bsq run --interactive` (records land in `runs/`, capture is always on). To make a shareable video: screen-record the autoplay replay, or `python tools/export_video.py <record.json>` if you have Playwright installed.
+
+Two deliberation modes exist: **monologue** (the default — the configuration all recorded results were measured on) and **interactive** (`--interactive` — speakers see the evolving discussion and every round ends in a vote with elimination stakes). The recorded two-tier null is attributed to the monologue configuration; measuring displacement under interaction is future, funded work.
+
 ## First result
 
 A first pre-registered probe ran two capability tiers through the identical de-confounded channel and returned a kill-rule-passing **null** on both, with a faint, unresolved hint in the displacement direction on the stronger tier. Full numbers, confidence intervals, and the power analysis are in the **[paper](paper/balloon-squeeze.md)**.
@@ -69,14 +82,19 @@ What's new is the conjunction: a manipulated verifier-awareness variable, truth 
 ## Repository layout
 
 ```text
-src/bsq/              the instrument — mock-first engine, ledger, verifier arms, replay
+src/bsq/              the instrument — mock-first engine, ledger, verifier arms, replay,
+                      run records (record.py), HTML replay renderer (render.py)
 packages/noisyjudge/  reusable MIT kit — judge-error-corrected contrast estimation
 packages/deconfound/  reusable MIT kit — blind-classifier label-leakage check
+examples/transcripts/ committed run records, one per core arm (drift-locked to the engine)
 paper/                workshop-paper draft + figures
 results/              recorded real-model probe runs
 tests/                determinism, the de-confounding gate, estimator recovery, power
+tools/                optional helpers (video export of a replay)
 01–05-*.md            concept brief, architecture, roadmap, pre-registration
 ```
+
+Runtime records are written to `runs/` (gitignored); the committed examples above are deterministic, offline-generated, and locked to the engine by a regression test.
 
 The two `packages/` kits are the parts intended for reuse; the instrument package is marked `Private :: Do Not Upload`.
 
@@ -85,7 +103,7 @@ The two `packages/` kits are the parts intended for reuse; the instrument packag
 - **[case-study-deconfounding.md](case-study-deconfounding.md)** — the methodological core: catching, *measuring*, and killing the 82.8% confound, with the tests that keep it dead.
 - **[paper/balloon-squeeze.md](paper/balloon-squeeze.md)** — the workshop-paper draft: instrument, de-confounding protocol, measurement, the first probe's calibrated bound, and the threat-model ladder.
 - **[05-preregistration.md](05-preregistration.md)** — the pre-registration: primary vs secondary analyses, confirmatory gates, abort rules.
-- **[01-concept-brief.md](01-concept-brief.md)**, **[02-technical-architecture.md](02-technical-architecture.md)**, **[03-build-roadmap.md](03-build-roadmap.md)** — the research brief, the architecture, and the phased build plan.
+- **[01-concept-brief.md](01-concept-brief.md)**, **[02-technical-architecture.md](02-technical-architecture.md)**, **[03-build-roadmap.md](03-build-roadmap.md)** — the research brief, the architecture, and the phased build plan (including the canonical [remaining-gates list](03-build-roadmap.md#remaining-gates): what still needs funding or a maintainer decision).
 
 ## Contributing
 

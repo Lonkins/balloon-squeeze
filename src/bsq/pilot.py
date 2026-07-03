@@ -18,11 +18,13 @@ import math
 import statistics
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
+from pathlib import Path
 
 from bsq.agents.policy import Policy
 from bsq.engine import Extractor, run_game
 from bsq.models import GameConfig, PropositionClass
 from bsq.power import ArmClassStats, required_games
+from bsq.record import default_record_path, finalize, write_record
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,19 +84,31 @@ def run_pilot(
     impostor_policy: Policy | None = None,
     panelist_policy: Policy | None = None,
     extractor: Extractor | None = None,
+    record_dir: Path | None = Path("runs"),
+    model_label: str = "offline-mock",
 ) -> PilotReport:
-    """Run ``n_games`` on one arm and aggregate the impostor's per-class false statistics."""
+    """Run ``n_games`` on one arm and aggregate the impostor's per-class false statistics.
+
+    Every game's full run record is persisted to ``record_dir`` by default (capture is
+    default-on); pass a generic ``model_label``, never a model tier name.
+    """
     if n_games <= 0:
         raise ValueError("n_games must be positive")
     per_game: dict[PropositionClass, list[tuple[int, int]]] = {cls: [] for cls in PropositionClass}
     for game in range(n_games):
+        arm_cfg = replace(cfg, verifier_arm=arm)
         result = run_game(
-            replace(cfg, verifier_arm=arm),
+            arm_cfg,
             base_seed + game,
             impostor_policy=impostor_policy,
             panelist_policy=panelist_policy,
             extractor=extractor,
         )
+        if record_dir is not None:
+            write_record(
+                finalize(result.record_game, model_label=model_label),
+                default_record_path(arm_cfg, base_seed + game, base=record_dir),
+            )
         by_id = {p.id: p for p in result.game.proposition_ledger}
         counts: dict[PropositionClass, list[int]] = {cls: [0, 0] for cls in PropositionClass}
         for claim in result.game.claims:

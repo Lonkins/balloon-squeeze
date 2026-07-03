@@ -115,6 +115,23 @@ class Agent:
     alive: bool = True
 
 
+@dataclass(frozen=True, slots=True)
+class VoteCast:
+    """One participant's end-of-round accusation (interactive mode)."""
+
+    voter_id: str
+    target_id: str  # a living agent id, or "abstain"
+
+
+@dataclass(frozen=True, slots=True)
+class RoundVotes:
+    """The vote block closing one interactive round."""
+
+    round_idx: int
+    votes: tuple[VoteCast, ...]
+    eliminated: str | None  # strict plurality winner, or None on a tie / all-abstain
+
+
 @dataclass(slots=True)
 class GameConfig:
     n_agents: int = 5
@@ -125,6 +142,10 @@ class GameConfig:
     verifier_arm: str = "A0_off"
     eliminate_between_rounds: bool = True
     topic_deck: tuple[str, ...] = ()
+    # Interactive mode: speakers see the prior discussion and each round ends in a vote
+    # with elimination stakes. Defaults OFF — the monologue default is the historical,
+    # measured configuration and must stay byte-identical.
+    interactive: bool = False
 
 
 @dataclass(slots=True)

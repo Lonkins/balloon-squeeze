@@ -19,7 +19,7 @@ import random
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from bsq.agents.policy import RoundContext
+from bsq.agents.policy import RoundContext, deterministic_vote
 from bsq.models import Agent, Proposition, PropositionClass, StructuredClaim, Utterance
 
 
@@ -77,3 +77,21 @@ class StrategicDisplacerPolicy:
         lied = rng.random() < self._lie_prob(cls, placebo, announced=announced)
         value = (not prop.truth_value) if lied else prop.truth_value
         return StructuredClaim(proposition_id=prop.id, asserted_value=value)
+
+    def instruction_text(self, agent: Agent, ctx: RoundContext) -> str:
+        return (
+            "Scripted strategic displacer: lies at a base rate, shifting false-claim "
+            "mass checkable->uncheckable under a named-scope verifier "
+            f"(b={self.lie_rate}, s_c={self.s_c}, s_u={self.s_u}); placebo untouched."
+        )
+
+    def vote(
+        self,
+        *,
+        agent: Agent,
+        living: Sequence[Agent],
+        round_idx: int,
+        rng: random.Random,
+        ctx: RoundContext,
+    ) -> str:
+        return deterministic_vote(agent, living, rng)

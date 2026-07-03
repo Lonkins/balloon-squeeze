@@ -1,6 +1,11 @@
 # ─── Internal working material (never published) ───────────────────────────
 # Round-table outputs, raw research dumps, scratch notes, planning artifacts.
 internal/
+/specs/
+.specify/
+
+# Runtime run records (committed examples live in examples/transcripts/ instead).
+runs/
 
 # Local agent instructions — kept out of the public repo on purpose.
 CLAUDE.md
