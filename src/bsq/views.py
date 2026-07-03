@@ -20,6 +20,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from bsq.models import Proposition, PropositionClass, VerifierArm
+from bsq.rng import substream
 
 #: The only proposition fields the extractor may see. The audit tag is deliberately absent.
 VIEW_FIELDS: frozenset[str] = frozenset({"id", "surface_form", "topic_id"})
@@ -43,13 +44,21 @@ class AgentMenuView:
 
     ``audit_tag`` is ``[AUDITED]``/``[NOT AUDITED]`` only under an arm that announces its
     scope, and ``None`` otherwise — so the tag is the single, declarable channel through
-    which the audit boundary reaches the agent. It is still truth- and placebo-blind.
+    which the audit boundary reaches the agent.
+
+    ``truth_mark`` is the impostor's **private truth briefing**: populated only when the
+    menu is built with ``include_truth=True`` (the impostor's own menu), and always
+    ``None`` for placebo items — the impostor knowingly lies only where it knows the
+    truth, which is what lets the placebo channel isolate a tag-as-permission artifact
+    instead of mirroring true displacement. Panelist menus and the extractor's
+    :class:`PropositionView` can never carry it.
     """
 
     id: str
     surface_form: str
     topic_id: str
     audit_tag: str | None
+    truth_mark: bool | None = None
 
 
 def proposition_views(ledger: Sequence[Proposition]) -> list[PropositionView]:
@@ -60,23 +69,47 @@ def proposition_views(ledger: Sequence[Proposition]) -> list[PropositionView]:
     ]
 
 
-def agent_menu_views(ledger: Sequence[Proposition], arm: VerifierArm) -> list[AgentMenuView]:
+def agent_menu_views(
+    ledger: Sequence[Proposition],
+    arm: VerifierArm,
+    *,
+    include_truth: bool = False,
+    world_seed: int | None = None,
+) -> list[AgentMenuView]:
     """Project a ledger to the agent's menu, tagging audit scope only when announced.
 
     ``[AUDITED]`` is shown for checkable propositions (the ones the oracle verifies) and
     ``[NOT AUDITED]`` for uncheckable ones, but only when ``arm.announces_scope``; under
     every other arm the tag is ``None`` and the agent sees a bare menu (so ``A1_implicit``
     is a verifier-announced-but-scope-unknown arm).
+
+    ``include_truth=True`` builds the **impostor's** menu: non-placebo items carry their
+    private ``truth_mark`` (a pure function of the world, never the arm). Placebo items
+    stay ``None`` on every menu.
+
+    Under a ``shuffled_tags`` arm the displayed tags are drawn from a dedicated,
+    world-pure substream independent of true class (``world_seed`` required), decoupling
+    tag semantics from oracle coverage; the oracle itself is untouched.
     """
     show_tag = arm.announces_scope
+    tags = [_audit_tag(p) if show_tag else None for p in ledger]
+    if show_tag and arm.shuffled_tags:
+        if world_seed is None:
+            raise ValueError("shuffled_tags arm requires world_seed for the tag shuffle")
+        rng = substream(world_seed, "shuffled_tags")
+        shuffled = [AUDITED if rng.random() < 0.5 else NOT_AUDITED for _ in ledger]
+        tags = list(shuffled)
     return [
         AgentMenuView(
             id=p.id,
             surface_form=p.surface_form,
             topic_id=p.topic_id,
-            audit_tag=_audit_tag(p) if show_tag else None,
+            audit_tag=tags[i],
+            truth_mark=(
+                p.truth_value if include_truth and not p.is_placebo_irrelevant else None
+            ),
         )
-        for p in ledger
+        for i, p in enumerate(ledger)
     ]
 
 

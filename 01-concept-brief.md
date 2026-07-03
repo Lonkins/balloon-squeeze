@@ -41,7 +41,7 @@ A scalar **Displacement Index `D = ΔU / |ΔC|`** is reported **only as a second
 
 ## The contribution
 
-> A pre-registered, replay-isolated, **de-confounded** instrument for causally estimating whether announcing a verifier *reduces* or *redistributes* an LLM agent's false claims across a checkability boundary — with the engine holding truth on **both** sides and the boundary de-confounded from claim content. Its first two-tier probe returns a **calibrated upper bound** on displacement (a kill-rule-passing null with a faint, unresolved directional hint), **not** a displacement existence proof.
+> A replay-isolated, **de-confounded, truth-grounded** instrument for causally estimating whether announcing a verifier *reduces* or *redistributes* an LLM agent's false claims across a checkability boundary — with the engine holding truth on **both** sides, the boundary de-confounded from claim content, and the impostor privately briefed so its lies are *knowing*. No behavioral findings are claimed yet: the pre-repair live probes measured a structurally-zero quantity and are retained as harness shakeout (see the paper §3.5 and the case study, Part II).
 
 ## Operational definitions (load-bearing)
 

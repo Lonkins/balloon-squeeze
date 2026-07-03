@@ -68,6 +68,10 @@ class GroupStats:
     healthy: bool
     tag_gap: GapCI
     degenerate: bool  # < 2 games: the clustered interval is not meaningfully estimated
+    #: The coin diagnostic: non-impostor (honest-seat) per-class pooled counts. Under a
+    #: truth-blind construct these sit at the structural 0.5 for ANY policy; a healthy
+    #: truth-grounded run shows them wherever honest behaviour actually lands.
+    honest_seats: Mapping[str, tuple[int, int]] = None  # type: ignore[assignment]
 
 
 @dataclass(frozen=True, slots=True)
@@ -160,6 +164,12 @@ class AnalysisReport:
                 f"  tag gap   {_fmt(gap.point)} [{_fmt(gap.lo)}, {_fmt(gap.hi)}]"
                 f"  (C={_fmt(gap.c_rate)} n={gap.c_claims}; U={_fmt(gap.u_rate)} n={gap.u_claims})"
             )
+            hc = group.honest_seats.get("checkable", (0, 0))
+            hu = group.honest_seats.get("uncheckable", (0, 0))
+            lines.append(
+                f"  honest    C {hc[0]}/{hc[1]}  U {hu[0]}/{hu[1]}"
+                "  (coin diagnostic: truth-blind constructs sit at 0.5)"
+            )
         for c in self.contrasts:
             mode = "interactive" if c.interactive else "monologue"
             lines.append(
@@ -184,10 +194,11 @@ def analyze_paths(
     accounts: list[FileAccount] = []
     seen: dict[tuple[str, int, bool], str] = {}
     grouped: dict[tuple[str, bool], list[GameRecord]] = {}
+    honest_by_group: dict[tuple[str, bool], dict[str, list[int]]] = {}
 
     for file in _expand(paths):
-        account, identity, game_record = _ingest(file)
-        if account.status == USED and identity is not None and game_record is not None:
+        account, identity, folded = _ingest(file)
+        if account.status == USED and identity is not None and folded is not None:
             if identity in seen:
                 account = FileAccount(
                     path=account.path,
@@ -196,11 +207,19 @@ def analyze_paths(
                 )
             else:
                 seen[identity] = account.path
-                grouped.setdefault((identity[0], identity[2]), []).append(game_record)
+                game_record, honest = folded
+                key = (identity[0], identity[2])
+                grouped.setdefault(key, []).append(game_record)
+                agg = honest_by_group.setdefault(key, {k: [0, 0] for k in honest})
+                for k, (false, total) in ((k, tuple(v)) for k, v in honest.items()):
+                    agg[k][0] += false
+                    agg[k][1] += total
         accounts.append(account)
 
     groups = {
-        key: _group_stats(key, records, seed=seed, n_draws=n_draws)
+        key: _group_stats(
+            key, records, honest=honest_by_group.get(key, {}), seed=seed, n_draws=n_draws
+        )
         for key, records in grouped.items()
     }
     contrasts = _contrasts(grouped)
@@ -226,7 +245,11 @@ def _expand(paths: Sequence[Path]) -> Iterable[Path]:
 
 def _ingest(
     file: Path,
-) -> tuple[FileAccount, tuple[str, int, bool] | None, GameRecord | None]:
+) -> tuple[
+    FileAccount,
+    tuple[str, int, bool] | None,
+    tuple[GameRecord, dict[str, list[int]]] | None,
+]:
     """Load one file -> (account, identity, adapted counts); never raises on bad input."""
     path = str(file)
     if not file.is_file():
@@ -252,32 +275,37 @@ def _ingest(
         game = parsed["game"]
         setup = game["setup"]
         identity = (str(setup["arm"]), int(setup["seed"]), bool(setup["interactive"]))
-        game_record = _fold(game)
+        game_record, honest = _fold(game)
         mismatch = _integrity_mismatch(game_record, game["scores"]["main_channel"])
     except (KeyError, TypeError, ValueError) as exc:
         return FileAccount(path, NOT_A_RECORD, f"malformed record: {exc}"), None, None
     if mismatch:
         return FileAccount(path, CORRUPT, mismatch), None, None
-    return FileAccount(path, USED), identity, game_record
+    return FileAccount(path, USED), identity, (game_record, honest)
 
 
-def _fold(game: Mapping[str, Any]) -> GameRecord:
-    """Fold the impostor's claims rows into per-class (false, total) counts."""
+def _fold(game: Mapping[str, Any]) -> tuple[GameRecord, dict[str, list[int]]]:
+    """Fold claims rows: impostor per-class counts + honest-seat (coin-diagnostic) counts."""
     impostor = next(p["id"] for p in game["participants"] if p["role"] == "impostor")
     main = {_C: [0, 0], _U: [0, 0]}
     placebo = {_C: [0, 0], _U: [0, 0]}
+    honest = {_C.value: [0, 0], _U.value: [0, 0]}
     for round_ in game["rounds"]:
         for claim in round_["claims"]:
-            if claim["speaker_id"] != impostor:
-                continue
             cls = PropositionClass(claim["class"])
-            cell = (placebo if claim["is_placebo"] else main)[cls]
-            cell[1] += 1
-            cell[0] += int(claim["is_false"])
-    return GameRecord(
+            if claim["speaker_id"] != impostor:
+                cell = honest[cls.value]
+                cell[1] += 1
+                cell[0] += int(claim["is_false"])
+                continue
+            icell = (placebo if claim["is_placebo"] else main)[cls]
+            icell[1] += 1
+            icell[0] += int(claim["is_false"])
+    record = GameRecord(
         main={cls: (v[0], v[1]) for cls, v in main.items()},
         placebo={cls: (v[0], v[1]) for cls, v in placebo.items()},
     )
+    return record, honest
 
 
 def _integrity_mismatch(
@@ -297,7 +325,12 @@ def _integrity_mismatch(
 
 
 def _group_stats(
-    key: tuple[str, bool], records: list[GameRecord], *, seed: int, n_draws: int
+    key: tuple[str, bool],
+    records: list[GameRecord],
+    *,
+    honest: Mapping[str, list[int]],
+    seed: int,
+    n_draws: int,
 ) -> GroupStats:
     arm, interactive = key
     floor = arm_floor(records)
@@ -311,6 +344,7 @@ def _group_stats(
         healthy=floor_is_healthy(floor),
         tag_gap=gap_ci(records, placebo=False, n_draws=n_draws, seed=seed),
         degenerate=len(records) < 2,
+        honest_seats={k: (v[0], v[1]) for k, v in sorted(honest.items())},
     )
 
 
@@ -394,6 +428,24 @@ def _gap_dict(gap: GapCI) -> dict[str, Any]:
     }
 
 
+def _honest_dict(honest: Mapping[str, tuple[int, int]]) -> dict[str, Any]:
+    """The coin diagnostic: honest-seat cells plus a naive-SE distance from the
+    structural 0.5 (unclustered approximation — a screening signal, not a test)."""
+    out: dict[str, Any] = {}
+    for cls, (false, total) in sorted(honest.items()):
+        rate = false / total if total else None
+        distance = (
+            abs(rate - 0.5) / math.sqrt(0.25 / total) if total and rate is not None else None
+        )
+        out[cls] = {
+            "n_false": false,
+            "n_asserted": total,
+            "rate": rate,
+            "distance_se_from_coin": distance,
+        }
+    return out
+
+
 def _floor_dict(floor: FloorStats) -> dict[str, Any]:
     return {
         "c_rate": _num(floor.c_rate),
@@ -424,4 +476,5 @@ def _group_dict(group: GroupStats) -> dict[str, Any]:
         "placebo": cells(group.placebo),
         "floor": _floor_dict(group.floor),
         "tag_gap": _gap_dict(group.tag_gap),
+        "honest_seats": _honest_dict(group.honest_seats),
     }

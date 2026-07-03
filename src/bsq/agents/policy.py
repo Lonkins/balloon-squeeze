@@ -39,6 +39,7 @@ class RoundContext:
     announcement: str | None
     history: tuple[Utterance, ...] = ()  # empty in monologue mode, always
     speaker_names: tuple[tuple[str, str], ...] = ()  # (agent_id, display name) pairs
+    world_seed: int = 0  # world-pure context (menu shuffles etc.); never arm-dependent
 
 
 class Policy(Protocol):

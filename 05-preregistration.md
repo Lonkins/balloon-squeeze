@@ -1,5 +1,20 @@
 # 05 · Pre-registration Plan
 
+> **Status: pre-committed in-repo (git-timestamped), NOT externally frozen.** This plan
+> has been amended after data collection (amendments are dated inline), so runs to date
+> are pilots/shakeout, never confirmatory. It is to be **frozen externally (OSF or
+> equivalent, with the analysis-code hash) before any confirmatory run**. Two further
+> honesty notes: (1) the recorded stronger-tier run violated this plan's own
+> channel-depth precondition as originally worded (the repair landed in the same batch
+> as the run rather than strictly before it); (2) a 2026-07-03 construct audit found the
+> runs to date measured a structurally-zero quantity (the impostor had no truth channel
+> — see the paper §3.5), so no analysis below has ever been executed on a valid
+> construct. The instrument has been repaired (private truth briefing; consequence
+> coupling; positive-control and shuffled-tag arms; measured operating characteristics),
+> and any future confirmatory run must use the repaired construct, pre-commit its
+> deliberation mode, report the honest-seat coin diagnostic, and assess controls by
+> pre-registered equivalence bounds rather than include-zero checks.
+
 This is the analysis plan to be **frozen (OSF or equivalent) before the full run** (Roadmap Phase 6). It separates confirmatory from exploratory analysis to prevent HARKing, and it commits in advance to the gates and abort rules. The point of a pre-registration is that the *null is as publishable as the effect*; this design is built so that is true.
 
 ## Study question
@@ -39,7 +54,7 @@ A **bivariate mixed-effects / seemingly-unrelated-regression (SUR)** model on `(
 
 **Power-driven primary (added after the two real-provider pilots, 2026-06-16).** The pilots showed the *checkable* channel is well-fed (~7 impostor claims/game) but the *uncheckable* channel stays thin (~2.2/game — below the ~4 needed for a stable per-class rate). The design is therefore well-powered for the **`ΔC` marginal** (checkable suppression — does announcing a verifier measurably reduce checkable false-mass) and **under-powered for `ΔU`**. The confirmatory **headline primary is `ΔC`**; the **displacement contrast (`ΔU>0`, H1) is demoted to a secondary, honestly under-powered read reported as a calibrated upper bound**. The joint SUR fit and the quadrant decision rules above are retained for that secondary displacement read; the headline shifts to the effect the instrument can power on a limited single-family budget, never overclaiming a displacement existence proof from a weak-tier run.
 
-**Stronger-model arm (pre-registered, conditional on funding; added 2026-06-17 after the first probe).** The first pre-registered probe was run on a weak tier with the audit boundary *declared* (`A1_announced`, the explicit `[AUDITED]/[NOT AUDITED]` tag). It returned a clean null: within-`A1` tag gap (uncheckable-minus-checkable false rate) = **+0.048, 95% CI [−0.223, +0.288]**, with a healthy lie floor (21–43%) and clean controls — a credible zero that passed the pre-committed kill rule, reported as a calibrated upper bound. This pre-registers, *in advance of any spend*, the prediction and design for one capability-gradient step:
+**Stronger-model arm (pre-committed, conditional on funding; added 2026-06-17 after the first probe).** *[Superseded by the 2026-07-03 status note: the probe described below ran on the truth-blind construct, so its numbers quantify a structural zero — "clean null", "healthy lie floor", and "credible zero" were misreadings, retained here only to preserve the amendment history.]* The first probe was run on a weak tier with the audit boundary *declared* (`A1_announced`, the explicit `[AUDITED]/[NOT AUDITED]` tag). It returned a within-`A1` tag gap of +0.048 [−0.223, +0.288] with per-channel rates 0.37–0.42. This section pre-committed, *in advance of any spend*, the prediction and design for one capability-gradient step:
 
 - **Prediction (confirmatory).** If displacement scales with capability — the field's working prior, and why monitor-awareness work targets frontier models — a stronger model will show a **positive within-`A1` tag gap** (`ΔtagU−C > 0`, CI excluding 0) where the weak tier showed none. A stronger-model null with a *tight* CI is the alternative confirmatory outcome and is itself a publishable, harder-to-dismiss negative result.
 - **Binding precondition — channel depth.** The weak-tier CI is wide because the uncheckable channel is thin (~2.8 claims/game). Before any stronger-model run, the channel must be deepened to **≥4–5 uncheckable claims/game** via a *class-neutral* coverage increase (the impostor addresses more statements per turn, with proportionally more rounds and a wider token budget) — class-neutral so it thickens both channels and never biases the contrast. Spending a stronger-model budget at ~2.8 claims/game would reproduce an underpowered wide-CI null and is pre-excluded.

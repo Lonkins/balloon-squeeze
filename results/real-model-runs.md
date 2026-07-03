@@ -1,9 +1,22 @@
 # Real-model run record
 
-The committed source-of-record for every real-model (paid) result reported in
+The committed source-of-record for the real-model (paid) runs referenced in
 [`paper/balloon-squeeze.md`](../paper/balloon-squeeze.md). The deterministic, zero-spend
 results (the de-confounding gate, the closed-loop recovery) are reproduced by the test
 suite, not recorded here.
+
+> **Read this first — these tables quantify a structural zero (re-labelled 2026-07-03).**
+> A construct audit found that at the time of these runs the impostor had **no channel to
+> know statement truth**: truth was a hidden, balanced, content-independent assignment,
+> so for *any* policy the expected false rate was 0.5 and the expected tag gap was exactly
+> **0 by construction**. The rates and gaps below are therefore **coin-disagreement noise
+> under heavy between-world clustering — not measurements of lying or displacement** —
+> and these runs are retained strictly as **harness shakeout** (live-path operation,
+> claim volumes, per-game economics). The kill-rule caveat also applies: the
+> capability-gradient runs were A1-only early-stopped reads; the four-way rule executed
+> only on the first weak-tier probe. The construct has since been repaired (private truth
+> briefing; see the paper §3.5) and any future run reports through the recomputable
+> record pipeline with the honest-seat coin diagnostic.
 
 > **Recomputability (2026-07-03, forward-looking).** Runs from this point on persist a
 > complete per-game run record ([format](../docs/record-format.md)) and re-derive every
@@ -44,11 +57,13 @@ pipeline; both early-stopped `inert`.
 
 | tier | games | checkable false/total (rate) | uncheckable false/total (rate) | tag gap (U−C) [95% CI] |
 |------|------:|------------------------------|--------------------------------|------------------------|
-| weak (repaired) | 14 | 41/102 (0.402) | 25/63 (0.397) | **−0.005** [−0.267, +0.274] |
-| stronger | 14 | 44/100 (0.440) | 31/61 (**0.508**) | **+0.068** [−0.119, +0.282] |
+| weak (repaired) | 14 | 41/102 (0.402) | 25/63 (0.397) | −0.005 [−0.267, +0.274] |
+| stronger | 14 | 44/100 (0.440) | 31/61 (0.508) | +0.068 [−0.119, +0.282] |
 
-No confirmatory displacement on either tier (both CIs contain 0). The stronger tier lied more
-on its unaudited claims (0.508 vs 0.440): a faint +0.07 hint in the predicted direction,
-≈ 0.7 SE from zero, unresolved at this budget. Per the committed power model the hint needs
-≈ 180–300 worlds/arm (Figure 1); 14 worlds resolve only a gross effect (MDE ≈ 0.20). Zero
-truncations on the weak tier, one on each stronger-tier run (tolerated, partial text used).
+Both numbers are draws from the structural zero described in the banner: under the
+truth-blind construct the expected rate was 0.5 per channel and the expected gap exactly 0
+for any model, so neither the rates, the gaps, nor any direction in them carries
+behavioral meaning. (An earlier version of this document described the stronger tier's
++0.068 as a "directional hint"; that reading is retracted.) Operational facts that do
+carry forward: claim volumes per game as tabled, zero truncations on the weak tier, one
+per stronger-tier run (tolerated, partial text used), and per-game cost ≈ $0.15.

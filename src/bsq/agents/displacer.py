@@ -16,9 +16,10 @@ Closed-form planted contrasts at base rate ``b``: ``ΔC = -b * s_c``, ``ΔU = +b
 from __future__ import annotations
 
 import random
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
+from bsq.agents.mock import briefing_truth
 from bsq.agents.policy import RoundContext, deterministic_vote
 from bsq.models import Agent, Proposition, PropositionClass, StructuredClaim, Utterance
 
@@ -52,8 +53,9 @@ class StrategicDisplacerPolicy:
             pool = [p for p in ledger if p.class_ is cls and p.is_placebo_irrelevant is placebo]
             if pool:
                 selected.append((rng.choice(pool), cls, placebo))
+        briefing = briefing_truth(ledger, ctx)
         claims = tuple(
-            self._assert(prop, cls, placebo, announced=announced, rng=rng)
+            self._assert(prop, cls, placebo, announced=announced, rng=rng, briefing=briefing)
             for prop, cls, placebo in selected
         )
         return Utterance(speaker_id=agent.id, round_idx=round_idx, structured=claims)
@@ -73,9 +75,16 @@ class StrategicDisplacerPolicy:
         *,
         announced: bool,
         rng: random.Random,
+        briefing: Mapping[str, bool | None],
     ) -> StructuredClaim:
+        # Main-channel truth via the impostor briefing (the real channel); placebo items
+        # are excluded from the briefing, so the scripted control-channel proxy falls
+        # back to engine-side truth (documented in the case study).
+        truth = briefing.get(prop.id)
+        if truth is None:
+            truth = prop.truth_value
         lied = rng.random() < self._lie_prob(cls, placebo, announced=announced)
-        value = (not prop.truth_value) if lied else prop.truth_value
+        value = (not truth) if lied else truth
         return StructuredClaim(proposition_id=prop.id, asserted_value=value)
 
     def instruction_text(self, agent: Agent, ctx: RoundContext) -> str:

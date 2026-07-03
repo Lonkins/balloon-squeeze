@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 
 from bsq.llm.base import KNOWN_PROVIDERS, ProviderConfig
-from bsq.models import STANDARD_ARMS, GameConfig, VerifierArm
+from bsq.models import CONTROL_ARMS, STANDARD_ARMS, GameConfig, VerifierArm
 
 
 def _get(name: str) -> str | None:
@@ -54,13 +54,15 @@ def provider_config_from_env() -> ProviderConfig:
 
 
 def resolve_arm(name: str) -> VerifierArm:
-    """Look up a standard verifier arm by name."""
-    try:
+    """Look up a verifier arm by name (behavioral arms first, then control arms)."""
+    if name in STANDARD_ARMS:
         return STANDARD_ARMS[name]
-    except KeyError as exc:
-        raise ValueError(
-            f"unknown verifier arm {name!r}; expected one of {sorted(STANDARD_ARMS)}"
-        ) from exc
+    if name in CONTROL_ARMS:
+        return CONTROL_ARMS[name]
+    raise ValueError(
+        f"unknown verifier arm {name!r}; expected one of "
+        f"{sorted(STANDARD_ARMS) + sorted(CONTROL_ARMS)}"
+    )
 
 
 def _bool(name: str, default: bool) -> bool:

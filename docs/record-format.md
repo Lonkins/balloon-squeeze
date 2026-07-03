@@ -171,6 +171,12 @@ checkable contrast ΔC is reported; when `A0_off`, `A1_announced`, and `A2_silen
 present, the pre-committed kill-rule verdict is recomputed by the identical rule the
 instrument applies in-process.
 
+The report also carries the **coin diagnostic** per group (`honest_seats`): non-impostor
+false rates with a naive-SE distance from the structural 0.5. Under a truth-blind
+construct *every* policy's false rate sits at 0.5 (assertions independent of a hidden
+balanced coin), so honest-seat rates pinned near 0.5 are the signature of a construct
+that cannot fire — this diagnostic is mandatory reporting for any measured run.
+
 Accounting rules: every input file is listed as `used` or excluded with a reason
 (`not-a-record`, `unsupported-version`, `corrupt` — the record's own `scores` block
 disagrees with a recount of its claims rows — or `duplicate`, the same arm/seed/mode seen

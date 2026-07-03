@@ -325,6 +325,18 @@ def _timeline(
                 f'data-ut="{ut}">Verifier checked {len(round_["verifications"])} audited '
                 f"claim(s); {n_wrong} found false.</div>"
             )
+        if round_.get("bulletin"):
+            lines = "".join(
+                f"<li>{_esc(names.get(str(e['speaker_id']), str(e['speaker_id'])))} on "
+                f"\u201c{_esc(e['surface_form'])}\u201d — "
+                f"{'<strong>FALSE</strong>' if e['verdict'] == 'false' else 'correct'}</li>"
+                for e in round_["bulletin"]["entries"]
+            )
+            parts.append(
+                f'<div class="vote-block step" data-af="{af}" data-at="{at}" '
+                f'data-uf="{uf}" data-ut="{ut}"><strong>The Verifier announces its '
+                f"findings.</strong><ul>{lines}</ul></div>"
+            )
         if round_["vote"]:
             parts.append(_vote(round_["vote"], names, impostor_id, af=af, at=at, uf=uf, ut=ut))
     parts.append(_finale(game, names, impostor_id, af=af, at=at, uf=uf, ut=ut))
