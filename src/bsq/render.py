@@ -130,6 +130,16 @@ footer.scoreboard {
   display: flex; gap: 2rem; font: 13px/1.4 ui-monospace, monospace; color: var(--muted);
 }
 footer.scoreboard strong { color: var(--text); }
+@media (max-width: 700px) {
+  /* In-flow on small screens: a tall fixed bar would obscure the timeline's tail. */
+  footer.scoreboard {
+    position: static; flex-wrap: wrap; gap: 0.4rem 1.2rem; padding: 0.7rem 1.2rem;
+  }
+  section.timeline { padding-bottom: 1.5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .step, .step[hidden] { transition: none; }
+}
 .step {
   opacity: 1; transform: translateY(0);
   transition: opacity 0.5s var(--step-ease), transform 0.5s var(--step-ease);
@@ -151,6 +161,7 @@ _JS = """
       if (el && step.dataset[k] !== undefined) el.textContent = step.dataset[k];
     });
   }
+  var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function show(n) {
     idx = Math.max(1, Math.min(n, steps.length));
     steps.forEach(function (s, i) {
@@ -158,7 +169,9 @@ _JS = """
     });
     var current = steps[idx - 1];
     scoreboard(current);
-    if (idx > 1) current.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    if (idx > 1) {
+      current.scrollIntoView({ block: 'nearest', behavior: reducedMotion ? 'auto' : 'smooth' });
+    }
     if (idx === steps.length) { stop(); document.body.dataset.replayDone = '1'; }
   }
   function next() { show(idx + 1); }
@@ -166,14 +179,22 @@ _JS = """
   function play() {
     if (timer) return;
     playBtn.textContent = 'Pause';
+    playBtn.setAttribute('aria-pressed', 'true');
     timer = setInterval(next, 1500);
   }
-  function stop() { clearInterval(timer); timer = null; playBtn.textContent = 'Play'; }
+  function stop() {
+    clearInterval(timer);
+    timer = null;
+    playBtn.textContent = 'Play';
+    playBtn.setAttribute('aria-pressed', 'false');
+  }
   document.getElementById('next').addEventListener('click', next);
   document.getElementById('prev').addEventListener('click', prev);
   playBtn.addEventListener('click', function () { timer ? stop() : play(); });
-  document.getElementById('truth').addEventListener('click', function () {
-    document.body.classList.toggle('hide-truth');
+  var truthBtn = document.getElementById('truth');
+  truthBtn.addEventListener('click', function () {
+    var hidden = document.body.classList.toggle('hide-truth');
+    truthBtn.setAttribute('aria-pressed', hidden ? 'false' : 'true');
   });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'ArrowRight') next();
@@ -229,11 +250,12 @@ def _masthead(setup: Mapping[str, Any]) -> str:
         f'<span class="badge">arm {_esc(setup["arm"])}</span>'
         f'<span class="badge">seed {_esc(setup["seed"])}</span>'
         f'<span class="badge">{mode}</span>'
-        '<div class="controls">'
-        '<button id="prev" type="button">Back</button>'
-        '<button id="play" type="button">Play</button>'
-        '<button id="next" type="button">Step</button>'
-        '<button id="truth" type="button">Truth on/off</button>'
+        '<div class="controls" role="group" aria-label="Replay controls">'
+        '<button id="prev" type="button" aria-label="Step back">Back</button>'
+        '<button id="play" type="button" aria-pressed="false" aria-label="Autoplay">Play</button>'
+        '<button id="next" type="button" aria-label="Step forward">Step</button>'
+        '<button id="truth" type="button" aria-pressed="true" '
+        'aria-label="Toggle truth values">Truth on/off</button>'
         "</div></header>"
     )
 
@@ -411,7 +433,7 @@ def _finale(
 
 def _scoreboard() -> str:
     return (
-        '<footer class="scoreboard"><span>impostor false claims — '
+        '<footer class="scoreboard" aria-live="polite"><span>impostor false claims — '
         'audited: <strong id="sb-af">0</strong>/<strong id="sb-at">0</strong></span>'
         '<span>unaudited: <strong id="sb-uf">0</strong>/<strong id="sb-ut">0</strong></span>'
         "<span>watch whether the lies migrate to the unaudited side</span></footer>"

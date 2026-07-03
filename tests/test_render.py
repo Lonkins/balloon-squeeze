@@ -89,6 +89,16 @@ def test_monologue_record_renders_without_vote_blocks() -> None:
     assert '<div class="vote-block' not in html  # no vote panels in a monologue replay
 
 
+def test_web_standards_reduced_motion_and_a11y() -> None:
+    html = render_html(_example_record())
+    assert "prefers-reduced-motion" in html  # transitions disabled for motion-sensitive users
+    assert 'aria-live="polite"' in html  # the scoreboard announces updates
+    assert 'aria-pressed' in html  # stateful controls expose their state
+    assert 'aria-label="Replay controls"' in html
+    # the mobile layout keeps the scoreboard in flow so it cannot obscure the timeline
+    assert "max-width: 700px" in html and "position: static" in html
+
+
 def test_early_end_is_shown() -> None:
     # The gallery example (seed 8) catches the impostor in the final round.
     record = _example_record()

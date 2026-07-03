@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 from bsq.agents.policy import ABSTAIN, RoundContext, deterministic_vote
 from bsq.canonical import canonical_claim_stream
 from bsq.engine import plurality_elimination, run_game
+from bsq.llm.base import ChatTurn
 from bsq.models import (
     Agent,
     GameConfig,
@@ -178,6 +179,96 @@ def test_interactive_runs_are_deterministic() -> None:
     )
     assert a.rounds_votes == b.rounds_votes
     assert a.ended_early == b.ended_early
+
+
+class _ScriptedInteractiveLLM:
+    """A fake model for end-to-end interactive games.
+
+    Speech responses are distinguishable per call; vote prompts are answered with a
+    fixed participant name. Captures every user prompt for assertions.
+    """
+
+    def __init__(self, vote_name: str) -> None:
+        self.vote_name = vote_name
+        self.prompts: list[str] = []
+        self._n = 0
+
+    def complete(
+        self,
+        *,
+        system: str,
+        messages: list[ChatTurn],
+        max_tokens: int = 256,
+        temperature: float = 0.0,
+        stop: list[str] | None = None,
+        seed: int | None = None,
+    ) -> str:
+        user = messages[-1].content
+        self.prompts.append(user)
+        if "name the one participant" in user:
+            return self.vote_name
+        self._n += 1
+        return f"Contribution number {self._n}: I trust the ledger on several of these."
+
+
+def test_llm_end_to_end_interactive_game() -> None:
+    """FakeLLM through run_game: discussion threads into prompts, model votes eliminate,
+    and the record captures text, votes, and the elimination."""
+    from bsq.agents.llm_policy import LLMPolicy
+    from bsq.extract import make_llm_extractor
+
+    cfg = GameConfig(n_agents=4, rounds=2, n_topics=4, interactive=True)
+    impostor_id = run_game(cfg, 13).game.impostor_id
+    target_id = next(pid for pid in ("p0", "p1", "p2", "p3") if pid != impostor_id)
+    names = {"p0": "Ash", "p1": "Bree", "p2": "Cyrus", "p3": "Dale"}
+
+    client = _ScriptedInteractiveLLM(vote_name=names[target_id])
+    policy = LLMPolicy(client)
+
+    @dataclass(frozen=True)
+    class _ExtractorLLM:
+        canned: str
+
+        def complete(
+            self,
+            *,
+            system: str,
+            messages: list[ChatTurn],
+            max_tokens: int = 256,
+            temperature: float = 0.0,
+            stop: list[str] | None = None,
+            seed: int | None = None,
+        ) -> str:
+            return self.canned
+
+    extractor = make_llm_extractor(
+        _ExtractorLLM('[{"proposition_id":"p000","asserted_value":true}]')
+    )
+    result = run_game(
+        cfg, 13, impostor_policy=policy, panelist_policy=policy, extractor=extractor
+    )
+
+    # (a) a round-2 speech prompt carried the round-1 discussion verbatim
+    later_speech = [
+        p for p in client.prompts if "Statements under discussion" in p and "Discussion so far" in p
+    ]
+    assert later_speech, "no interactive speech prompt carried the discussion"
+    assert any("Contribution number 1:" in p for p in later_speech)
+
+    # (b) the model-named target was eliminated by the plurality
+    assert result.rounds_votes[0].eliminated == target_id
+    assert not result.ended_early  # a panelist fell; the game continued
+    assert target_id not in {u.speaker_id for u in result.utterances if u.round_idx == 1}
+
+    # (c) the record captured text utterances, the votes, and the elimination
+    from bsq.record import finalize
+
+    record = finalize(result.record_game)
+    round0 = record["game"]["rounds"][0]
+    assert round0["vote"]["eliminated"] == target_id
+    assert all(u["text"] and u["failure"] is None for u in round0["utterances"])
+    voters = {v["voter_id"] for v in round0["vote"]["votes"]}
+    assert voters == {"p0", "p1", "p2", "p3"}
 
 
 def test_arm_swap_identity_holds_for_arm_insensitive_policies() -> None:

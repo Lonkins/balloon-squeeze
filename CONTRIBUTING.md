@@ -27,7 +27,8 @@ transcripts must equal a fresh regeneration; after an *intentional* engine chang
 regenerate them with `python -c "from pathlib import Path; from bsq.gallery import
 write_example_gallery; write_example_gallery(Path('examples/transcripts'))"`). Every game
 run persists a run record by default (`runs/`, gitignored); render one with
-`bsq render <record.json>` to eyeball a change in context.
+`bsq render <record.json>` to eyeball a change in context. The record format is a public
+contract — see [docs/record-format.md](docs/record-format.md) before changing it.
 
 ### Working on the kits
 
