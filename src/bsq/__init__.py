@@ -8,4 +8,4 @@ estimate whether dishonesty is reduced (honesty) or merely redistributed onto th
 unchecked claims (displacement — the "balloon squeeze").
 """
 
-__version__ = "0.0.1"
+__version__ = "0.1.0"

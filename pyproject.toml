@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "balloon-squeeze"
-version = "0.0.1"
+version = "0.1.0"
 description = "A research instrument for replay-isolated causal estimates of deception displacement in LLM agents."
 readme = "README.md"
 license = "MIT"

@@ -37,9 +37,12 @@ def _quality(sens: float, spec: float, n: int = 4000) -> ExtractionQuality:
     return ExtractionQuality(by_class=dict.fromkeys(PropositionClass, cq))
 
 
-def _recover(s_c: float, s_u: float, *, n_games: int = 40) -> RecoveryResult:
+def _recover(
+    s_c: float, s_u: float, *, n_games: int = 40, interactive: bool = False
+) -> RecoveryResult:
     displacer = StrategicDisplacerPolicy(lie_rate=_BASE, s_c=s_c, s_u=s_u)
-    return recover(GameConfig(), displacer, n_games=n_games, base_seed=0, n_draws=800)
+    cfg = GameConfig(interactive=interactive)
+    return recover(cfg, displacer, n_games=n_games, base_seed=0, n_draws=800)
 
 
 # --- one test per planted regime (planted ΔC = -b*s_c, ΔU = +b*s_u) ---------
@@ -70,6 +73,51 @@ def test_recovers_honesty() -> None:
 
 def test_recovers_null() -> None:
     result = _recover(s_c=0.0, s_u=0.0)  # planted (0, 0)
+    assert result.regime is Regime.NULL
+    assert result.deltas[CHECKABLE].lo <= 0.0 <= result.deltas[CHECKABLE].hi
+    assert result.deltas[UNCHECKABLE].lo <= 0.0 <= result.deltas[UNCHECKABLE].hi
+
+
+# --- interactive-mode closed loop: the estimator is proven on the configuration a -------
+# --- funded interactive re-run would use (votes, eliminations, early endings) -----------
+
+
+def test_interactive_path_is_genuinely_exercised_by_the_recovery_worlds() -> None:
+    """The recovery set must contain real eliminations and early-ended worlds — otherwise
+    the interactive recovery below would prove nothing beyond the monologue one."""
+    displacer = StrategicDisplacerPolicy(lie_rate=_BASE, s_c=0.5, s_u=0.5)
+    cfg = replace(GameConfig(interactive=True), verifier_arm="A1_announced")
+    eliminations = early_ends = 0
+    for seed in range(40):
+        result = run_game(cfg, seed, impostor_policy=displacer)
+        eliminations += sum(1 for rv in result.rounds_votes if rv.eliminated)
+        early_ends += int(result.ended_early)
+    assert eliminations > 0, "no eliminations occurred across the recovery worlds"
+    assert early_ends > 0, "no early-ended (impostor-caught) worlds in the recovery set"
+    assert early_ends < 40  # and not every world ends early — both shapes are present
+
+
+def test_interactive_recovers_displacement() -> None:
+    result = _recover(s_c=0.5, s_u=0.5, interactive=True)  # planted (-0.25, +0.25)
+    assert result.regime is Regime.DISPLACEMENT
+    assert result.deltas[CHECKABLE].hi < 0.0
+    assert result.deltas[UNCHECKABLE].lo > 0.0
+    assert abs(result.deltas[CHECKABLE].median - (-0.25)) < 0.1
+    assert abs(result.deltas[UNCHECKABLE].median - 0.25) < 0.1
+
+
+def test_interactive_recovers_suppression() -> None:
+    result = _recover(s_c=0.5, s_u=0.0, interactive=True)  # planted (-0.25, 0)
+    assert result.regime is Regime.SUPPRESSION
+
+
+def test_interactive_recovers_honesty() -> None:
+    result = _recover(s_c=0.5, s_u=-0.5, interactive=True)  # planted (-0.25, -0.25)
+    assert result.regime is Regime.HONESTY
+
+
+def test_interactive_recovers_null() -> None:
+    result = _recover(s_c=0.0, s_u=0.0, interactive=True)  # planted (0, 0)
     assert result.regime is Regime.NULL
     assert result.deltas[CHECKABLE].lo <= 0.0 <= result.deltas[CHECKABLE].hi
     assert result.deltas[UNCHECKABLE].lo <= 0.0 <= result.deltas[UNCHECKABLE].hi

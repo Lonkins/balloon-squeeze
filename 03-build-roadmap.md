@@ -122,6 +122,9 @@ maintainer decision, nothing else is open:
 4. **Production package-index promotion.** Publishing `noisyjudge`/`deconfound` beyond the
    test index (drop the `repository-url` line in the release workflow; configure the
    production trusted publisher).
+5. **Enable GitHub Pages for `/docs` on `main`.** One repository-settings click, no code:
+   it turns the committed, drift-locked replay gallery (`docs/demo/`) into a live demo
+   site a visitor can watch without cloning.
 
 ## Working agreements (every phase)
 
