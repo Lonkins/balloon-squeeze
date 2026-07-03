@@ -152,3 +152,28 @@ record = load_record(Path("examples/transcripts/A1_announced.json"))  # version-
 
 The committed gallery is drift-locked: a regression test regenerates it and asserts
 equality, so these examples can never silently diverge from the engine that produced them.
+
+## Analyzing records
+
+Every statistic the project reports is recomputable from record files alone:
+
+```sh
+bsq analyze runs/                       # or any mix of files and directories
+bsq analyze examples/transcripts --json report.json
+```
+
+The report gives, per `(arm, mode)` group: pooled per-class false counts and rates (main
+and placebo channels), claims-per-game floors with the health gate, and the within-arm tag
+gap with its game-clustered bootstrap interval (`--seed`, default 0, and `--draws`, default
+2000, are recorded in the report — same inputs and seed ⇒ byte-identical output). When a
+baseline (`A0_off`) and treatment (`A1_announced`) group of the same mode are present, the
+checkable contrast ΔC is reported; when `A0_off`, `A1_announced`, and `A2_silent` are all
+present, the pre-committed kill-rule verdict is recomputed by the identical rule the
+instrument applies in-process.
+
+Accounting rules: every input file is listed as `used` or excluded with a reason
+(`not-a-record`, `unsupported-version`, `corrupt` — the record's own `scores` block
+disagrees with a recount of its claims rows — or `duplicate`, the same arm/seed/mode seen
+twice). Records are **never pooled across arms or deliberation modes**. The statistics
+themselves are computed by the same functions the live instrument uses — the analysis
+relocates *where* numbers are computed, never *what* they compute.

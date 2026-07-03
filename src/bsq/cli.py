@@ -16,6 +16,7 @@ from dataclasses import replace
 from pathlib import Path
 
 from bsq import __version__
+from bsq.analyze import analyze_paths
 from bsq.config import game_config_from_env, provider_config_from_env, resolve_arm
 from bsq.engine import run_game
 from bsq.llm import ChatTurn, make_client
@@ -103,6 +104,23 @@ def _render(args: argparse.Namespace) -> int:
     return 0
 
 
+def _analyze(args: argparse.Namespace) -> int:
+    """Recompute the full statistics report from persisted run records."""
+    report = analyze_paths(
+        [Path(p) for p in args.paths], seed=args.seed, n_draws=args.draws
+    )
+    print(report.render_text(), end="")
+    if args.json:
+        out = Path(args.json)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(report.to_json(), encoding="utf-8")
+        print(f"json report: {out}")
+    if report.n_used == 0:
+        print("no usable run records found", file=sys.stderr)
+        return 1
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="bsq", description="Balloon Squeeze")
     parser.add_argument("--version", action="version", version=f"bsq {__version__}")
@@ -130,6 +148,19 @@ def build_parser() -> argparse.ArgumentParser:
     render_p.add_argument(
         "-o", "--out", type=str, default=None, help="output path (default: alongside the record)"
     )
+    analyze_p = sub.add_parser(
+        "analyze", help="recompute the statistics report from run-record files"
+    )
+    analyze_p.add_argument(
+        "paths", nargs="+", type=str, help="record files and/or directories of records"
+    )
+    analyze_p.add_argument("--seed", type=int, default=0, help="bootstrap seed (default 0)")
+    analyze_p.add_argument(
+        "--draws", type=int, default=2000, help="bootstrap draw count (default 2000)"
+    )
+    analyze_p.add_argument(
+        "--json", type=str, default=None, help="also write the canonical JSON report here"
+    )
     return parser
 
 
@@ -144,6 +175,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _replay(args)
     if args.command == "render":
         return _render(args)
+    if args.command == "analyze":
+        return _analyze(args)
     parser.print_help()
     return 0
 

@@ -45,6 +45,7 @@ pip install -e ".[dev]"
 bsq selftest                                        # zero-setup determinism check, no key
 pytest                                              # full suite
 pytest tests/test_corpus.py -k blind_class_guess    # the de-confounding gate, at chance
+bsq analyze examples/transcripts                    # recompute statistics from record files
 ```
 
 Every offline claim is reproducible this way — replay determinism, the de-confounding gate, the judge-error-corrected closed-loop recovery, and the power model. Real-model probe results are recorded in [results/real-model-runs.md](results/real-model-runs.md) and the [paper](paper/balloon-squeeze.md).
