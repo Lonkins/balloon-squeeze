@@ -127,12 +127,62 @@ def test_a4_reveals_nothing_up_front() -> None:
 
 
 def test_a4_replay_identity_with_a0() -> None:
-    """The world is byte-identical across the arm swap (A4 vs A0, same seed)."""
+    """Arm-swap identity holds for A4: identical claim stream for arm-insensitive
+    policies across the arm roster, plus a byte-identical world board."""
+    from bsq.replay import arm_swap_is_identical
+
+    cfg = _interactive_cfg("A0_off")
+    assert arm_swap_is_identical(
+        cfg, 7, ["A0_off", "A4_feedback_revealed", "A1_announced", "A2_silent"]
+    )
     boards = {
         arm: finalize(run_game(_interactive_cfg(arm), 7).record_game)["game"]["board"]
         for arm in ("A4_feedback_revealed", "A0_off")
     }
     assert boards["A4_feedback_revealed"] == boards["A0_off"]
+
+
+def test_consequence_sentence_only_in_interactive_prompts() -> None:
+    """The impostor is told verdicts are announced ONLY when that can actually happen."""
+    ledger = author_ledger(GameConfig(n_topics=8), 5)
+    impostor = Agent(
+        id="p1", persona=Persona(id="x", name="Ash", blurb="b", voice="dry"),
+        role=Role.IMPOSTOR,
+    )
+    for arm_name in ("A1_announced", "A1_implicit"):
+        arm = STANDARD_ARMS[arm_name]
+        for interactive, expected in ((False, False), (True, True)):
+            client = _RecordingLLM()
+            policy = LLMPolicy(client)
+            ctx = RoundContext(
+                arm=arm, announcement=None, world_seed=5, interactive=interactive
+            )
+            policy.act(
+                agent=impostor, ledger=ledger, round_idx=0, rng=random.Random(0), ctx=ctx
+            )
+            system, _ = client.prompts[-1]
+            assert ("announced to the group" in system) is expected, (arm_name, interactive)
+
+
+def test_bulletin_attribution_names_the_actual_claimant() -> None:
+    """Each bulletin entry names the seat whose claim produced that verdict — aligned
+    1:1, in order, with the round's checkable claims (even when a proposition is
+    claimed by several speakers in the same round)."""
+    multi_claimed = 0
+    for seed in range(12):
+        record = finalize(run_game(_interactive_cfg("A1_announced"), seed).record_game)
+        for round_entry in record["game"]["rounds"]:
+            checkable = [c for c in round_entry["claims"] if c["class"] == "checkable"]
+            entries = (round_entry.get("bulletin") or {"entries": []})["entries"]
+            assert len(entries) == len(checkable)
+            for entry, claim in zip(entries, checkable, strict=True):
+                assert entry["speaker_id"] == claim["speaker_id"]
+                assert entry["proposition_id"] == claim["proposition_id"]
+                assert entry["verdict"] == ("false" if claim["is_false"] else "correct")
+            claimed = [c["proposition_id"] for c in checkable]
+            if len(set(claimed)) < len(claimed):
+                multi_claimed += 1
+    assert multi_claimed > 0, "no multi-claimant round exercised the regression"
 
 
 def test_a4_bulletins_flow_and_analyze_groups_separately(tmp_path: object) -> None:

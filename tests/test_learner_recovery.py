@@ -113,17 +113,39 @@ def test_naive_pooled_gap_shows_the_documented_dilution() -> None:
 
 
 def test_blindness_pin_no_bulletins_no_contrast() -> None:
-    """With bulletins stripped, the same inference has no signal: contrast ~ 0."""
+    """With bulletins stripped, the same inference has no signal: contrast ~ 0.
+
+    The informed cells are reconstructed from the RUN RECORD's bulletins (which exist
+    regardless of what the policy chose to read), so the informed readout is defined for
+    the blind learner too — and must be ~0 with its CI covering 0, because the blind
+    policy routes by a class-balanced belief set. This is the strong pin: any
+    non-bulletin channel leaking the boundary would move this contrast off zero. The
+    naive pooled true-class gap must be ~0 for the same reason.
+    """
     from bsq.recovery import feedback_recovery
 
     blind = BulletinBoundaryLearner(
         lie_rate=0.5, s_audited=0.9, s_unaudited=0.9, ignore_bulletins=True
     )
     result = feedback_recovery(_CFG, blind, n_games=30, base_seed=0)
-    # The blind learner sees no bulletins, so its learned-audited set is empty and no
-    # claim lands in the informed-audited cell: the informed readout is undefined (nan),
-    # which is itself the pin for that cell. The naive pooled TRUE-class gap must be ~0:
-    # the learner's "unaudited" belief set is class-balanced, so routing by it moves no
-    # class mass.
-    assert result.naive_gap == result.naive_gap  # not nan — both classes asserted
+    assert result.ci_lo <= 0.0 <= result.ci_hi, (
+        f"blind informed contrast excludes 0: {result.informed_contrast:+.3f} "
+        f"[{result.ci_lo:+.3f}, {result.ci_hi:+.3f}]"
+    )
+    assert abs(result.informed_contrast) < 0.15
     assert abs(result.naive_gap) < 0.1, f"blind learner shows a class gap: {result.naive_gap:+.3f}"
+
+
+def test_feedback_recovery_rejects_bulletin_free_configs() -> None:
+    """Fail fast instead of reporting a confident readout over zero bulletins."""
+    import pytest
+
+    from bsq.recovery import feedback_recovery
+
+    with pytest.raises(ValueError, match="interactive"):
+        feedback_recovery(
+            GameConfig(n_topics=8, rounds=4, verifier_arm="A4_feedback_revealed"),
+            _PLANT, n_games=2, base_seed=0,
+        )
+    with pytest.raises(ValueError, match="broadcasting"):
+        feedback_recovery(_CFG, _PLANT, n_games=2, base_seed=0, arm_name="A2_silent")

@@ -34,7 +34,7 @@ from bsq.models import (
 )
 from bsq.scoring import ClassCount, SeatScore
 from bsq.verifier import Verification, announcement_for
-from bsq.views import AUDITED, NOT_AUDITED
+from bsq.views import displayed_audit_tags
 
 GAME_RECORD_VERSION = 1
 
@@ -67,7 +67,9 @@ def build_game_payload(
     ``extraction_failed`` rather than silently absent.
     """
     by_id = {p.id: p for p in ledger}
-    show_tags = arm.announces_scope
+    # The tags exactly as the menus displayed them (single source of truth in views) —
+    # under a shuffled_tags arm the board records the shuffle, not the true class.
+    menu_tags = displayed_audit_tags(ledger, arm, world_seed=seed)
 
     board = [
         {
@@ -75,15 +77,11 @@ def build_game_payload(
             "surface_form": p.surface_form,
             "class": p.class_.value,
             "truth_value": p.truth_value,
-            "audit_tag": (
-                (AUDITED if p.class_ is PropositionClass.CHECKABLE else NOT_AUDITED)
-                if show_tags
-                else None
-            ),
+            "audit_tag": menu_tags[i],
             "topic_id": p.topic_id,
             "is_placebo_irrelevant": p.is_placebo_irrelevant,
         }
-        for p in ledger
+        for i, p in enumerate(ledger)
     ]
 
     participant_entries = [

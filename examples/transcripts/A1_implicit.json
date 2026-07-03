@@ -453,7 +453,7 @@
           "entries": [
             {
               "proposition_id": "p010",
-              "speaker_id": "p2",
+              "speaker_id": "p0",
               "surface_form": "Delacroix booked the venue for the second week of June.",
               "verdict": "correct"
             },
@@ -629,7 +629,7 @@
           "entries": [
             {
               "proposition_id": "p003",
-              "speaker_id": "p2",
+              "speaker_id": "p0",
               "surface_form": "The call center handled nine hundred calls on launch day.",
               "verdict": "correct"
             },

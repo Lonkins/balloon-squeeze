@@ -32,7 +32,7 @@ reference for writing your own consumer.
 | field | meaning |
 |---|---|
 | `seed` | the world seed — the replay key |
-| `arm` | verifier arm (`A0_off`, `A1_announced`, `A1_implicit`, `A2_silent`, `A3_placebo`) |
+| `arm` | any registered arm name: the standard set (`A0_off`, `A1_announced`, `A1_implicit`, `A2_silent`, `A3_placebo`) or a calibration arm (`A1_positive_control`, `A1_shuffled_tags`, `A4_feedback_revealed`) |
 | `interactive` | `true` = discussion visibility + votes; `false` = the monologue configuration |
 | `n_agents`, `rounds`, `n_topics`, `placebo_fraction`, `checkability_fraction` | the `GameConfig` values |
 | `announcement` | the arm's constant announcement block, or `null` |
