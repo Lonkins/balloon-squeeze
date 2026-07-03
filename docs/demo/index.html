@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Balloon Squeeze — replay gallery</title><style>
+:root {
+  --bg: oklch(19% 0.02 260); --surface: oklch(24% 0.02 260);
+  --text: oklch(92% 0.01 260); --muted: oklch(70% 0.02 260);
+  --accent: oklch(78% 0.14 85);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0 auto; max-width: 720px; padding: 3rem 1.5rem;
+  background: var(--bg); color: var(--text);
+  font: 16px/1.6 ui-sans-serif, system-ui, sans-serif;
+}
+h1 { font-size: 1.5rem; letter-spacing: 0.01em; }
+p { color: var(--muted); }
+ul.replays { list-style: none; padding: 0; display: grid; gap: 0.6rem; }
+ul.replays a {
+  display: block; background: var(--surface); color: var(--text);
+  border-radius: 10px; padding: 0.9rem 1.1rem; text-decoration: none;
+}
+ul.replays a:hover { outline: 1px solid var(--accent); }
+ul.replays .arm { font-weight: 650; }
+ul.replays .blurb { display: block; color: var(--muted); font-size: 0.85rem; }
+footer { margin-top: 2.5rem; font-size: 0.8rem; color: var(--muted); }
+</style></head><body><h1>Balloon Squeeze — replay gallery</h1><p>One seeded social-deduction game, replayed under each verifier arm. A hidden impostor is incentivised to lie about a board of statements while the engine holds ground truth for every claim; watch where the false claims land relative to the audited/unaudited boundary, and whether the group catches the impostor. Every replay is generated deterministically from a committed run record — the same world, seed 8, under five experimental arms.</p><ul class="replays"><li><a href="A0_off.html"><span class="arm">A0_off</span><span class="blurb">baseline — no verifier is announced and none runs</span></a></li><li><a href="A1_announced.html"><span class="arm">A1_announced</span><span class="blurb">the treatment — a verifier is announced and the impostor's menu carries the [AUDITED]/[NOT AUDITED] tags</span></a></li><li><a href="A1_implicit.html"><span class="arm">A1_implicit</span><span class="blurb">a verifier is announced but its scope is not (no tags)</span></a></li><li><a href="A2_silent.html"><span class="arm">A2_silent</span><span class="blurb">a verifier runs but is never announced (content-only control)</span></a></li><li><a href="A3_placebo.html"><span class="arm">A3_placebo</span><span class="blurb">a moderator with no verification (authority placebo)</span></a></li></ul><footer>Generated offline from committed run records; drift-locked to the engine. Source and method: the repository README and docs/record-format.md.</footer></body></html>

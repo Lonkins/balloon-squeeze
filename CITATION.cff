@@ -14,7 +14,7 @@ authors:
 repository-code: "https://github.com/Lonkins/balloon-squeeze"
 url: "https://github.com/Lonkins/balloon-squeeze"
 license: MIT
-version: "0.0.1"
+version: "0.1.0"
 keywords:
   - ai-safety
   - deception

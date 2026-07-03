@@ -340,3 +340,12 @@ exercising the Rogan-Gladen correction end to end; without it the contrast atten
 Every regime is recovered with the planted value inside the CI and the correct verdict,
 including through judge error. The reported empirical nulls are therefore measurements the
 instrument *can* distinguish from a real effect, not an inability to detect one.
+
+The same closed loop also runs through the **interactive configuration** (§2): with
+per-round votes active, panelists eliminated mid-game, and a share of worlds ending early
+when the impostor is caught — i.e. with variable per-world claim counts — all four planted
+regimes are again recovered with the correct verdict (the recovery worlds are verified to
+contain both eliminations and early-ended games, so the interactive machinery is genuinely
+exercised rather than incidentally idle). The estimator is thus validated on the exact
+configuration a funded interactive measurement would use, before any such measurement is
+funded.
