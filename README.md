@@ -58,7 +58,7 @@ bsq render examples/transcripts/A1_announced.json -o replay.html
 open replay.html    # step through or press Play — watch where the lies land
 ```
 
-The replay shows the statement board with its audited/unaudited boundary, each participant speaking in turn, per-claim lie/truth verdicts, the verifier's checks, the votes — and a running scoreboard of whether the impostor's false claims migrate to the unaudited side. Run your own game with `bsq run --interactive` (records land in `runs/`, capture is always on). To make a shareable video: screen-record the autoplay replay, or `python tools/export_video.py <record.json>` if you have Playwright installed.
+The replay shows the statement board with its audited/unaudited boundary, each participant speaking in turn, per-claim lie/truth verdicts, the verifier's checks, the votes — and a running scoreboard of whether the impostor's false claims migrate to the unaudited side. Run your own game with `bsq run --interactive` (records land in `runs/`, capture is always on; the record format is documented in [docs/record-format.md](docs/record-format.md)). To make a shareable video: screen-record the autoplay replay, or `python tools/export_video.py <record.json>` if you have Playwright installed.
 
 Two deliberation modes exist: **monologue** (the default — the configuration all recorded results were measured on) and **interactive** (`--interactive` — speakers see the evolving discussion and every round ends in a vote with elimination stakes). The recorded two-tier null is attributed to the monologue configuration; measuring displacement under interaction is future, funded work.
 
