@@ -423,3 +423,67 @@ def test_shuffled_replay_finale_and_verify_line_agree_with_the_board() -> None:
     assert printed_a == "0.00" and printed_u == "1.00"
     # verify line: displayed-audited count is stated when it diverges from checked count
     assert "displayed [AUDITED] on the board" in html
+
+
+def test_analyze_rejects_consistent_class_tag_co_edit(tmp_path: object) -> None:
+    """A co-edit that keeps class and tag mutually consistent is still caught: the gate
+    regenerates the world from (setup, seed) instead of trusting the board's own class
+    column, so it cannot be self-verified by the tampered file."""
+    import json
+    from pathlib import Path
+
+    from bsq.analyze import analyze_paths
+    from bsq.record import default_record_path, write_record
+
+    out = Path(str(tmp_path))
+    cfg = GameConfig(n_topics=6, rounds=1, n_agents=3, verifier_arm="A1_announced")
+    record = finalize(run_game(cfg, 4).record_game)
+    path = default_record_path(cfg, 4, base=out)
+    write_record(record, path)
+    tampered = json.loads(path.read_text())
+    flip = next(b for b in tampered["game"]["board"] if b["class"] == "checkable")
+    flip["class"] = "uncheckable"
+    flip["audit_tag"] = "[NOT AUDITED]"  # consistent with the edited class
+    path.write_text(json.dumps(tampered))
+    report = analyze_paths([out], seed=0)
+    assert not report.groups
+    (account,) = report.files
+    assert account.status == "corrupt"
+    assert "world assigned" in (account.reason or "")
+
+
+def test_analyze_rejects_claims_row_class_divergence(tmp_path: object) -> None:
+    """A claims row whose class disagrees with the board is excluded as corrupt."""
+    import json
+    from pathlib import Path
+
+    from bsq.analyze import analyze_paths
+    from bsq.record import default_record_path, write_record
+
+    out = Path(str(tmp_path))
+    cfg = GameConfig(n_topics=6, rounds=1, n_agents=3, verifier_arm="A1_announced")
+    record = finalize(run_game(cfg, 4).record_game)
+    path = default_record_path(cfg, 4, base=out)
+    write_record(record, path)
+    tampered = json.loads(path.read_text())
+    claim = tampered["game"]["rounds"][0]["claims"][0]
+    claim["class"] = "uncheckable" if claim["class"] == "checkable" else "checkable"
+    path.write_text(json.dumps(tampered))
+    report = analyze_paths([out], seed=0)
+    assert not report.groups
+    (account,) = report.files
+    assert account.status == "corrupt"
+    assert "the board says" in (account.reason or "")
+
+
+def test_analyze_accepts_every_committed_transcript() -> None:
+    """The stricter gates produce no false rejections on the committed gallery."""
+    from pathlib import Path
+
+    from bsq.analyze import analyze_paths
+
+    report = analyze_paths([Path("examples/transcripts")], seed=0)
+    assert all(account.status == "used" for account in report.files), [
+        (a.path, a.status, a.reason) for a in report.files if a.status != "used"
+    ]
+    assert len(report.files) == 5

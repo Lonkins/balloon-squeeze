@@ -31,7 +31,8 @@ from pathlib import Path
 from typing import Any
 
 from bsq.config import resolve_arm
-from bsq.models import PropositionClass
+from bsq.ledger import author_ledger
+from bsq.models import GameConfig, PropositionClass
 from bsq.probe import (
     FloorStats,
     GameRecord,
@@ -364,22 +365,52 @@ def _integrity_mismatch(
 
 
 def _board_tag_mismatch(game: Mapping[str, Any]) -> str | None:
-    """The displayed-tag fold feeds the statistics, so the board's tags must equal the
-    tags the (arm, seed) displayed — a tampered or corrupted tag would silently invert
-    the reported gap otherwise."""
-    arm = resolve_arm(str(game["setup"]["arm"]))
-    seed = int(game["setup"]["seed"])
-    classes = [PropositionClass(b["class"]) for b in game["board"]]
-    expected = expected_display_tags(classes, arm, world_seed=seed)
-    actual = [b["audit_tag"] for b in game["board"]]
-    if actual != expected:
-        first = next(
-            i for i, (a, e) in enumerate(zip(actual, expected, strict=True)) if a != e
-        )
-        return (
-            f"board.audit_tag[{first}] is {actual[first]!r} but the arm/seed displayed "
-            f"{expected[first]!r}"
-        )
+    """The displayed-tag fold feeds the statistics, so the board must equal the world
+    the (setup, seed) deterministically produced — ids, classes, and displayed tags are
+    all regenerated from ground truth, never trusted from the (editable) board itself.
+    A consistent class+tag co-edit is therefore caught, not just a single flipped tag.
+    Claims rows are cross-checked against the board too (id exists, class agrees)."""
+    setup = game["setup"]
+    arm = resolve_arm(str(setup["arm"]))
+    seed = int(setup["seed"])
+    cfg = GameConfig(
+        verifier_arm=str(setup["arm"]),
+        n_agents=int(setup["n_agents"]),
+        rounds=int(setup["rounds"]),
+        n_topics=int(setup["n_topics"]),
+        placebo_fraction=float(setup["placebo_fraction"]),
+        checkability_fraction=float(setup["checkability_fraction"]),
+        interactive=bool(setup["interactive"]),
+    )
+    ledger = author_ledger(cfg, seed)
+    board = game["board"]
+    if len(board) != len(ledger):
+        return f"board has {len(board)} entries; the (setup, seed) world has {len(ledger)}"
+    expected_tags = expected_display_tags([p.class_ for p in ledger], arm, world_seed=seed)
+    for i, (entry, prop, tag) in enumerate(zip(board, ledger, expected_tags, strict=True)):
+        if entry["id"] != prop.id:
+            return f"board[{i}].id is {entry['id']!r}; the world has {prop.id!r}"
+        if entry["class"] != prop.class_.value:
+            return (
+                f"board[{i}].class is {entry['class']!r}; the (setup, seed) world "
+                f"assigned {prop.class_.value!r}"
+            )
+        if entry["audit_tag"] != tag:
+            return (
+                f"board[{i}].audit_tag is {entry['audit_tag']!r} but the arm/seed "
+                f"displayed {tag!r}"
+            )
+    board_class = {b["id"]: b["class"] for b in board}
+    for round_ in game["rounds"]:
+        for claim in round_["claims"]:
+            declared = board_class.get(claim["proposition_id"])
+            if declared is None:
+                return f"claims row references {claim['proposition_id']!r}, not on the board"
+            if claim["class"] != declared:
+                return (
+                    f"claims row for {claim['proposition_id']!r} declares class "
+                    f"{claim['class']!r}; the board says {declared!r}"
+                )
     return None
 
 
