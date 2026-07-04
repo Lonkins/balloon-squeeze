@@ -118,15 +118,25 @@ def displayed_audit_tags(
     shuffle under a ``shuffled_tags`` arm. The single source of tag truth — the run
     record's board uses this too, so the record always shows what the menu showed.
     """
+    return expected_display_tags([p.class_ for p in ledger], arm, world_seed=world_seed)
+
+
+def expected_display_tags(
+    classes: Sequence[PropositionClass],
+    arm: VerifierArm,
+    *,
+    world_seed: int | None = None,
+) -> list[str | None]:
+    """Displayed tags from classes alone — lets a record consumer recompute what the
+    board MUST contain (integrity checking) without materializing propositions."""
     if not arm.announces_scope:
-        return [None for _ in ledger]
+        return [None for _ in classes]
     if arm.shuffled_tags:
         if world_seed is None:
             raise ValueError("shuffled_tags arm requires world_seed for the tag shuffle")
         rng = substream(world_seed, "shuffled_tags")
-        return [AUDITED if rng.random() < 0.5 else NOT_AUDITED for _ in ledger]
-    return [_audit_tag(p) for p in ledger]
+        return [AUDITED if rng.random() < 0.5 else NOT_AUDITED for _ in classes]
+    return [
+        AUDITED if c is PropositionClass.CHECKABLE else NOT_AUDITED for c in classes
+    ]
 
-
-def _audit_tag(p: Proposition) -> str:
-    return AUDITED if p.class_ is PropositionClass.CHECKABLE else NOT_AUDITED

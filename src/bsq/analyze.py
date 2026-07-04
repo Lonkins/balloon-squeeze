@@ -6,13 +6,19 @@ groups by ``(arm, interactive)``, accounts for every input file, and delegates e
 statistic — pooled rates, the seeded cluster-bootstrap tag gap, floor health, the
 pre-committed kill-rule verdict — to the unchanged :mod:`bsq.probe` functions. Relocating
 *where* the numbers are computed, never *what* they compute, is what makes record-derived
-results exactly equivalent to the in-process ones (and keeps any future methodological
-change a ``probe``/pre-registration matter).
+results equivalent to the in-process ones for every arm whose displayed tags coincide
+with true class — all standard arms and every no-tag board. The one deliberate
+divergence: when a board carries displayed tags, group statistics bucket by the tag the
+agents actually saw, so under ``A1_shuffled_tags`` the reported gap measures routing by
+the shuffle (the in-process :func:`bsq.probe.collect_arm` folds by true class and would
+read a trivial ~0 there). Statistics themselves still live in ``probe``.
 
 Guarantees: deterministic under (inputs, seed, draws); no pooling across arm or
 deliberation mode; every file reported as used or excluded-with-reason; each record's
-folded counts are cross-checked against its own ``scores.main_channel`` block, so a
-corrupted file is excluded rather than silently contaminating the analysis.
+true-class fold is cross-checked against its own ``scores.main_channel`` block AND its
+board's displayed tags are cross-checked against the tags the (arm, seed) must have
+displayed, so a corrupted file — counts or tags — is excluded rather than silently
+contaminating the analysis.
 """
 
 from __future__ import annotations
@@ -24,6 +30,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from bsq.config import resolve_arm
 from bsq.models import PropositionClass
 from bsq.probe import (
     FloorStats,
@@ -36,6 +43,7 @@ from bsq.probe import (
     gap_ci,
 )
 from bsq.record import GAME_RECORD_VERSION, serialize
+from bsq.views import expected_display_tags
 
 _C = PropositionClass.CHECKABLE
 _U = PropositionClass.UNCHECKABLE
@@ -277,6 +285,8 @@ def _ingest(
         identity = (str(setup["arm"]), int(setup["seed"]), bool(setup["interactive"]))
         class_record, tag_record, honest = _fold(game)
         mismatch = _integrity_mismatch(class_record, game["scores"]["main_channel"])
+        if not mismatch:
+            mismatch = _board_tag_mismatch(game)
     except (KeyError, TypeError, ValueError) as exc:
         return FileAccount(path, NOT_A_RECORD, f"malformed record: {exc}"), None, None
     if mismatch:
@@ -350,6 +360,26 @@ def _integrity_mismatch(
                 f"{declared['n_false']}/{declared['n_asserted']} but claims rows fold to "
                 f"{false}/{total}"
             )
+    return None
+
+
+def _board_tag_mismatch(game: Mapping[str, Any]) -> str | None:
+    """The displayed-tag fold feeds the statistics, so the board's tags must equal the
+    tags the (arm, seed) displayed — a tampered or corrupted tag would silently invert
+    the reported gap otherwise."""
+    arm = resolve_arm(str(game["setup"]["arm"]))
+    seed = int(game["setup"]["seed"])
+    classes = [PropositionClass(b["class"]) for b in game["board"]]
+    expected = expected_display_tags(classes, arm, world_seed=seed)
+    actual = [b["audit_tag"] for b in game["board"]]
+    if actual != expected:
+        first = next(
+            i for i, (a, e) in enumerate(zip(actual, expected, strict=True)) if a != e
+        )
+        return (
+            f"board.audit_tag[{first}] is {actual[first]!r} but the arm/seed displayed "
+            f"{expected[first]!r}"
+        )
     return None
 
 
