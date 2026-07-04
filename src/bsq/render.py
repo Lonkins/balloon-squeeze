@@ -337,10 +337,22 @@ def _timeline(
             )
         if round_["verifications"]:
             n_wrong = sum(1 for v in round_["verifications"] if not v["correct"])
+            n_checked = len(round_["verifications"])
+            n_displayed_audited = sum(
+                1 for v in round_["verifications"] if displayed[v["proposition_id"]]
+            )
+            if n_displayed_audited == n_checked:
+                checked_text = f"Verifier checked {n_checked} audited claim(s)"
+            else:
+                # Displayed tags diverge from oracle coverage (shuffled-tags arm):
+                # say what was checked without mislabeling it by the board's tags.
+                checked_text = (
+                    f"Verifier checked {n_checked} claim(s) "
+                    f"({n_displayed_audited} displayed [AUDITED] on the board)"
+                )
             parts.append(
                 f'<div class="verify step" data-af="{af}" data-at="{at}" data-uf="{uf}" '
-                f'data-ut="{ut}">Verifier checked {len(round_["verifications"])} audited '
-                f"claim(s); {n_wrong} found false.</div>"
+                f'data-ut="{ut}">{checked_text}; {n_wrong} found false.</div>'
             )
         if round_.get("bulletin"):
             lines = "".join(
@@ -448,16 +460,18 @@ def _finale(
         if game["ended_early"]
         else "The impostor survived every vote."
     )
-    main = game["scores"]["main_channel"]
 
-    def rate(cell: Mapping[str, Any]) -> str:
-        return "—" if cell["rate"] is None else f'{cell["rate"]:.2f}'
+    # Rates from the displayed-fold counters the timeline accumulated, so the finale
+    # sentence always agrees with the footer scoreboard and the board it sits next to
+    # (identical to the record's true-class scores block except under shuffled tags).
+    def rate(false: int, total: int) -> str:
+        return "—" if total == 0 else f"{false / total:.2f}"
 
     return (
         f'<div class="finale step" data-af="{af}" data-at="{at}" data-uf="{uf}" data-ut="{ut}">'
         f"<strong>Final.</strong> {_esc(names.get(impostor_id, impostor_id))} was the impostor. "
-        f"{outcome} False-claim rate on audited statements: {rate(main['checkable'])}; "
-        f"on unaudited: {rate(main['uncheckable'])}.</div>"
+        f"{outcome} False-claim rate on audited statements: {rate(af, at)}; "
+        f"on unaudited: {rate(uf, ut)}.</div>"
     )
 
 

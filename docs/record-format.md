@@ -178,13 +178,17 @@ bsq analyze examples/transcripts --json report.json
 The report gives, per `(arm, mode)` group: pooled per-class false counts and rates (main
 and placebo channels), claims-per-game floors with the health gate, and the within-arm tag
 gap with its game-clustered bootstrap interval (`--seed`, default 0, and `--draws`, default
-2000, are recorded in the report — same inputs and seed ⇒ byte-identical output). The tag
-gap buckets impostor claims by the **displayed** tag on the record's board when the board
-carries tags — identical to the true-class split for ordinary scope-announcing arms, but
-under `A1_shuffled_tags` it measures routing by the shuffle the agents actually saw (the
-claims-row `audited` field stays true-class, and the integrity cross-check against the
-record's `scores` block is always done on the true-class fold); boards without tags fall
-back to true class. When a
+2000, are recorded in the report — same inputs and seed ⇒ byte-identical output). When the board
+carries tags, the **entire main-channel group fold** — the pooled per-class false
+counts/rates published under the `checkable`/`uncheckable` keys, the claims-per-game
+floors, and the tag gap — buckets impostor claims by the **displayed** tag on the
+record's board. That is identical to the true-class split for ordinary scope-announcing
+arms, but under `A1_shuffled_tags` it measures routing by the shuffle the agents
+actually saw; boards without tags fall back to true class. The claims-row `audited`
+field stays true-class. Two integrity gates protect this: each record's true-class fold
+is cross-checked against its own `scores` block, and its board tags are cross-checked
+against the tags the (arm, seed) must have displayed — a record failing either is
+excluded as corrupt. When a
 baseline (`A0_off`) and treatment (`A1_announced`) group of the same mode are present, the
 checkable contrast ΔC is reported; when `A0_off`, `A1_announced`, and `A2_silent` are all
 present, the pre-committed kill-rule verdict is recomputed by the identical rule the

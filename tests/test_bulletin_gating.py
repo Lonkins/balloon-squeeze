@@ -370,3 +370,56 @@ def test_comprehension_skipped_when_no_tags_displayed() -> None:
     result = run_game(cfg, 5, impostor_policy=_CountingRouter())
     assert _CountingRouter.calls == 0
     assert _fin(result.record_game)["game"].get("tag_comprehension") is None
+
+
+def test_analyze_rejects_tampered_board_tags(tmp_path: object) -> None:
+    """The displayed-tag fold feeds the statistics, so a record whose board tags do not
+    match what the (arm, seed) displayed is excluded as corrupt — never silently used."""
+    import json
+    from pathlib import Path
+
+    from bsq.analyze import analyze_paths
+    from bsq.record import default_record_path, write_record
+
+    out = Path(str(tmp_path))
+    cfg = GameConfig(n_topics=6, rounds=1, n_agents=3, verifier_arm="A1_shuffled_tags")
+    record = finalize(run_game(cfg, 4).record_game)
+    path = default_record_path(cfg, 4, base=out)
+    write_record(record, path)
+    tampered = json.loads(path.read_text())
+    board = tampered["game"]["board"]
+    flip = next(b for b in board if b["audit_tag"] == "[AUDITED]")
+    flip["audit_tag"] = "[NOT AUDITED]"
+    path.write_text(json.dumps(tampered))
+    report = analyze_paths([out], seed=0)
+    assert not report.groups
+    (account,) = report.files
+    assert account.status == "corrupt"
+    assert "audit_tag" in (account.reason or "")
+
+
+def test_shuffled_replay_finale_and_verify_line_agree_with_the_board() -> None:
+    """The finale rates come from the displayed-fold counters (they match the footer),
+    and the verify line never mislabels oracle checks by the board's displayed tags."""
+    import re
+
+    from bsq.agents.mock import InstructedRouterPolicy
+    from bsq.render import render_html
+
+    cfg = GameConfig(n_topics=6, rounds=2, n_agents=3, verifier_arm="A1_shuffled_tags")
+    record = finalize(run_game(cfg, 9, impostor_policy=InstructedRouterPolicy()).record_game)
+    html = render_html(record)
+    finale = re.search(
+        r'class="finale step" data-af="(\d+)" data-at="(\d+)" data-uf="(\d+)" data-ut="(\d+)">'
+        r".*?audited statements: (\d+\.\d{2}|—); on unaudited: (\d+\.\d{2}|—)\.",
+        html,
+    )
+    assert finale
+    af, at, uf, ut, printed_a, printed_u = finale.groups()
+    expected_a = "—" if at == "0" else f"{int(af) / int(at):.2f}"
+    expected_u = "—" if ut == "0" else f"{int(uf) / int(ut):.2f}"
+    assert (printed_a, printed_u) == (expected_a, expected_u)
+    # the router lies only on displayed-[NOT AUDITED]: displayed-fold rates are 0 and 1
+    assert printed_a == "0.00" and printed_u == "1.00"
+    # verify line: displayed-audited count is stated when it diverges from checked count
+    assert "displayed [AUDITED] on the board" in html
