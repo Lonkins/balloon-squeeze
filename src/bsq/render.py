@@ -288,6 +288,18 @@ def _timeline(
     game: Mapping[str, Any], names: Mapping[str, str], impostor_id: str
 ) -> str:
     parts: list[str] = ['<section class="timeline"><h2>The game</h2>']
+    # Scope for chips/scoreboard follows the DISPLAYED tag when the arm displayed one
+    # (a shuffled-tags replay must agree with its own board); arms that displayed no
+    # boundary fall back to true class — the observer-view convention the scoreboard
+    # has always used.
+    displayed = {
+        b["id"]: (
+            b["audit_tag"] == "[AUDITED]"
+            if b["audit_tag"]
+            else b["class"] == "checkable"
+        )
+        for b in game["board"]
+    }
     af = at = uf = ut = 0  # impostor main-channel cumulative counts
     for round_ in game["rounds"]:
         parts.append(
@@ -304,7 +316,7 @@ def _timeline(
                 for claim in claims:
                     if claim["is_placebo"]:
                         continue
-                    if claim["audited"]:
+                    if displayed[claim["proposition_id"]]:
                         at += 1
                         af += int(claim["is_false"])
                     else:
@@ -316,6 +328,7 @@ def _timeline(
                     claims,
                     names,
                     is_impostor=speaker == impostor_id,
+                    displayed=displayed,
                     af=af,
                     at=at,
                     uf=uf,
@@ -354,6 +367,7 @@ def _turn(
     names: Mapping[str, str],
     *,
     is_impostor: bool,
+    displayed: Mapping[str, bool],
     af: int,
     at: int,
     uf: int,
@@ -371,7 +385,7 @@ def _turn(
     failure = ""
     if utterance["failure"]:
         failure = '<p class="failure">extraction failed for this utterance</p>'
-    chips = "".join(_chip(c) for c in claims)
+    chips = "".join(_chip(c, displayed) for c in claims)
     css = "turn impostor" if is_impostor else "turn"
     return (
         f'<article class="{css} step" data-af="{af}" data-at="{at}" data-uf="{uf}" data-ut="{ut}">'
@@ -381,10 +395,10 @@ def _turn(
     )
 
 
-def _chip(claim: Mapping[str, Any]) -> str:
+def _chip(claim: Mapping[str, Any], displayed: Mapping[str, bool]) -> str:
     verdict = "LIE" if claim["is_false"] else "true"
     css = "claim-chip lie" if claim["is_false"] else "claim-chip"
-    scope = "audited" if claim["audited"] else "unaudited"
+    scope = "audited" if displayed[claim["proposition_id"]] else "unaudited"
     stance = "asserts" if claim["asserted_value"] else "denies"
     return (
         f'<span class="{css}" title="{stance} {_esc(claim["proposition_id"])}">'

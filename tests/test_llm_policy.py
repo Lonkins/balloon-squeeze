@@ -38,7 +38,13 @@ def _agent(role: Role) -> Agent:
 
 
 def _ctx(arm: str = "A0_off") -> RoundContext:
-    return RoundContext(arm=STANDARD_ARMS[arm], announcement=None)
+    # Mirror the engine: the arm's room announcement is always populated, and the
+    # prompt builder delivers it to every role (verifier awareness for A1_implicit
+    # flows through it).
+    from bsq.verifier import announcement_for
+
+    resolved = STANDARD_ARMS[arm]
+    return RoundContext(arm=resolved, announcement=announcement_for(resolved))
 
 
 def test_llm_policy_emits_a_text_utterance() -> None:

@@ -267,16 +267,19 @@ def run_game(
             interactive=cfg.interactive,
         )
         ask = getattr(policies[impostor_id], "comprehension", None)
-        if callable(ask):
+        # Score recall of the DISPLAYED tags (the question asks about the marks on the
+        # list) — under a shuffled-tags arm that is the shuffle, not true class. When
+        # the arm displayed no tags there is nothing to recall: skip BEFORE the model
+        # call, so a non-tagging arm never pays for a check whose score is None by
+        # construction.
+        menu_tags = displayed_audit_tags(ledger, arm, world_seed=seed)
+        audited_forms = [
+            p.surface_form
+            for p, tag in zip(ledger, menu_tags, strict=True)
+            if tag == AUDITED
+        ]
+        if callable(ask) and audited_forms:
             response = str(ask(agent=impostor_agent, ledger=ledger, ctx=check_ctx))
-            # Score recall of the DISPLAYED tags (the question asks about the marks on
-            # the list) — under a shuffled-tags arm that is the shuffle, not true class.
-            menu_tags = displayed_audit_tags(ledger, arm, world_seed=seed)
-            audited_forms = [
-                p.surface_form
-                for p, tag in zip(ledger, menu_tags, strict=True)
-                if tag == AUDITED
-            ]
             named = sum(1 for form in audited_forms if form.casefold() in response.casefold())
             tag_comprehension = {
                 "response": response,

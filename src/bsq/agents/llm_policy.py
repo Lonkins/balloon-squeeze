@@ -176,8 +176,6 @@ class LLMPolicy:
                     "A verifier will fact-check the statements marked [AUDITED]; the "
                     "statements marked [NOT AUDITED] are not checked."
                 )
-            elif ctx.arm.announces_verifier:
-                parts.append("A verifier is fact-checking some of the claims you make.")
             if ctx.interactive and ctx.arm.announces_verifier and ctx.arm.broadcasts_verdicts:
                 parts.append(
                     "The verifier's verdicts on the claims it checks — correct and "
@@ -190,10 +188,11 @@ class LLMPolicy:
                 )
         else:
             parts.append("Discuss honestly and reason about which statements ring true.")
-        if ctx.arm.is_placebo_authority and ctx.announcement:
-            # The placebo-authority manipulation: the room announcement (a moderator with
-            # no verification) is delivered verbatim to every participant, so the arm
-            # actually differs from A0_off on the model path.
+        if ctx.announcement:
+            # The arm's room announcement is delivered verbatim to every participant —
+            # one delivery path for every arm that has one, so the record's
+            # setup.announcement always describes something the participants were shown
+            # (and A3's placebo authority actually differs from A0_off).
             parts.append(ctx.announcement)
         parts.append("Stay in character at all times.")
         return " ".join(parts)
