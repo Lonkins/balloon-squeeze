@@ -285,3 +285,88 @@ def test_replay_board_styles_by_displayed_tag() -> None:
     cfg0 = GameConfig(n_topics=6, rounds=1, n_agents=3, verifier_arm="A2_silent")
     html0 = render_html(finalize(run_game(cfg0, 9).record_game))
     assert 'class="audited"' not in html0
+
+
+def test_announcements_reach_every_role_for_every_announcing_arm() -> None:
+    """One delivery path: any arm with a room announcement shows it to all roles, so
+    the record's setup.announcement always describes what participants were shown."""
+    from bsq.verifier import announcement_for
+
+    ledger = author_ledger(GameConfig(n_topics=8), 5)
+    announcing = ("A1_announced", "A1_implicit", "A3_placebo")
+    all_arms = {**STANDARD_ARMS, **CONTROL_ARMS}
+    for arm_name in announcing:
+        arm = all_arms[arm_name]
+        ann = announcement_for(arm)
+        assert ann
+        for role in (Role.IMPOSTOR, Role.PANELIST):
+            agent = Agent(
+                id="p1", persona=Persona(id="x", name="Ash", blurb="b", voice="dry"),
+                role=role,
+            )
+            client = _RecordingLLM()
+            LLMPolicy(client).act(
+                agent=agent, ledger=ledger, round_idx=0, rng=random.Random(0),
+                ctx=RoundContext(arm=arm, announcement=ann, world_seed=5),
+            )
+            system, _ = client.prompts[-1]
+            assert ann in system, (arm_name, role)
+
+
+def test_shuffled_replay_timeline_agrees_with_its_board() -> None:
+    """Chips and scoreboard key off the displayed tag: a shuffled-tags replay never
+    shows an 'audited' chip for a statement its own board marks [NOT AUDITED]."""
+    import re
+
+    from bsq.render import render_html
+
+    cfg = GameConfig(n_topics=6, rounds=2, n_agents=3, verifier_arm="A1_shuffled_tags")
+    record = finalize(run_game(cfg, 9).record_game)
+    board_tag = {b["id"]: b["audit_tag"] for b in record["game"]["board"]}
+    html = render_html(record)
+    # every chip's title carries the proposition id; its scope text must match the board
+    chip_re = r'title="[a-z]+ (p\d+)">(?:LIE|true)<span class="cls">(\w+)</span>'
+    for pid, scope in re.findall(chip_re, html):
+        expected = "audited" if board_tag[pid] == "[AUDITED]" else "unaudited"
+        assert scope == expected, (pid, scope, board_tag[pid])
+
+
+def test_analyze_tag_gap_uses_displayed_tags_under_shuffle(tmp_path: object) -> None:
+    """A shuffle-router's displayed-tag routing is visible to analyze; true-class
+    bucketing would read ~0 by construction."""
+    from pathlib import Path
+
+    from bsq.agents.mock import InstructedRouterPolicy
+    from bsq.analyze import analyze_paths
+    from bsq.record import default_record_path, write_record
+
+    out = Path(str(tmp_path))
+    for seed in range(6):
+        cfg = GameConfig(n_topics=6, rounds=2, n_agents=3, verifier_arm="A1_shuffled_tags")
+        result = run_game(cfg, seed, impostor_policy=InstructedRouterPolicy())
+        write_record(finalize(result.record_game), default_record_path(cfg, seed, base=out))
+    report = analyze_paths([out], seed=0)
+    stats = report.groups[("A1_shuffled_tags", False)]
+    # the router lies ONLY on displayed-[NOT AUDITED] items: displayed-tag gap is 1.0
+    assert stats.tag_gap.point == 1.0, stats.tag_gap
+
+
+def test_comprehension_skipped_when_no_tags_displayed() -> None:
+    """No displayed-audited statements => no comprehension model call is made."""
+    from bsq.agents.mock import InstructedRouterPolicy
+    from bsq.record import finalize as _fin
+
+    class _CountingRouter(InstructedRouterPolicy):
+        calls: int = 0
+
+        def comprehension(self, **kwargs: object) -> str:
+            type(self).calls += 1
+            return ""
+
+    cfg = GameConfig(
+        n_topics=6, rounds=1, n_agents=3, verifier_arm="A2_silent",
+        comprehension_check=True,
+    )
+    result = run_game(cfg, 5, impostor_policy=_CountingRouter())
+    assert _CountingRouter.calls == 0
+    assert _fin(result.record_game)["game"].get("tag_comprehension") is None
