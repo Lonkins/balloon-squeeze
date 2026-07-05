@@ -53,11 +53,29 @@ class AnthropicClient:
         self._model = cfg.model
         self._client: Any = client if client is not None else _make_sdk_client(cfg)
         self._truncations = 0
+        # Newer models reject the (deprecated) ``temperature`` param with a 400. We send
+        # it by default (older models require it), and latch this on the first such
+        # rejection so the rest of the run omits it. Determinism via temperature is not
+        # available on those models anyway (the API also has no seed).
+        self._omit_temperature = False
 
     @property
     def truncations(self) -> int:
         """How many responses were capped at ``max_tokens`` (tolerated, partial returned)."""
         return self._truncations
+
+    def _create(self, request: dict[str, Any], temperature: float) -> Any:
+        """Issue the request, adapting to models that reject the temperature param."""
+        if self._omit_temperature:
+            return self._client.messages.create(**request)
+        try:
+            return self._client.messages.create(**request, temperature=temperature)
+        except Exception as exc:  # inspect the error, then re-raise anything unrelated
+            status = getattr(exc, "status_code", None)
+            if status == 400 and "temperature" in str(exc).lower():
+                self._omit_temperature = True
+                return self._client.messages.create(**request)
+            raise
 
     def complete(
         self,
@@ -72,7 +90,6 @@ class AnthropicClient:
         request: dict[str, Any] = {
             "model": self._model,
             "max_tokens": max_tokens,
-            "temperature": temperature,
             # Plain string, not a cache-control block: the prefix is far below the provider's
             # cache minimum, so caching could never read (see the module docstring).
             "system": system,
@@ -81,7 +98,7 @@ class AnthropicClient:
         if stop:
             request["stop_sequences"] = stop
 
-        response = self._client.messages.create(**request)
+        response = self._create(request, temperature)
 
         truncated = getattr(response, "stop_reason", None) == "max_tokens"
         if truncated:

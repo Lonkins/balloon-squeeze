@@ -35,7 +35,7 @@ class LLMPolicy:
     """An agent that speaks via a real model. Reads ``agent.role`` to set its stance."""
 
     client: LLMClient
-    max_tokens: int = 384  # room for a wider, class-neutral coverage of the menu per turn
+    max_tokens: int = 512  # wider class-neutral menu coverage; verbose models truncate at 384
     vote_max_tokens: int = 16  # a name (or "abstain") only
 
     def act(
